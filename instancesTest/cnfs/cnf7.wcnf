@@ -1,0 +1,16 @@
+c 2020-11-13 20:15:38 by qbfdd.py,v 1.2.2
+c qbfdd.py /tmp/1test.cnf /home/lagniez/Works/debugger/debugCompiler/testWModelCounting.sh -m ddmin -g b -qS
+c 
+c mode: ddmin
+c rounds: 2
+c test runs: 2134
+c time elapsed: 110.78s
+c total: clauses  : -116 (98.31%)
+c        variables: -0 (0.00%)
+c        literals : -478 (99.58%)
+c 
+p cnf 2 2
+-1 0
+1 0
+w 1 10
+w -1 5

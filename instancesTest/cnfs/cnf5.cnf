@@ -1,0 +1,18 @@
+c 2020-11-11 18:18:37 by qbfdd.py,v 1.2.2
+c qbfdd.py /tmp/1test.cnf /home/lagniez/Works/debugger/debugCompiler/compareNbDec.sh -m ddmin -g b -qS
+c 
+c mode: ddmin
+c rounds: 1
+c test runs: 193
+c time elapsed:  8.14s
+c total: clauses  : -78 (92.86%)
+c        variables: -0 (0.00%)
+c        literals : -358 (94.71%)
+c 
+p cnf 24 6
+21 3 -18 -17 15 4 0
+-10 -16 0
+-11 -9 13 0
+9 -10 4 0
+-13 -1 -14 0
+16 13 -22 0

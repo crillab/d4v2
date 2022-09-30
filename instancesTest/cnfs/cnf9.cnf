@@ -1,0 +1,14 @@
+c 2020-11-29 11:15:18 by qbfdd.py,v 1.2.2
+c qbfdd.py /tmp/1test.cnf /home/lagniez/Works/d4/build/d4_debug --query /tmp/1queries.cnf -m ddnnf-compiler -i -m ddmin -g b -qS
+c 
+c mode: ddmin
+c rounds: 1
+c test runs: 28
+c time elapsed:  3.32s
+c total: clauses  : -250 (99.21%)
+c        variables: -0 (0.00%)
+c        literals : -1168 (99.66%)
+c 
+p cnf 46 2
+-30 -9 0
+33 19 0
