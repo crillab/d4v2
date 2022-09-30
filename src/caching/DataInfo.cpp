@@ -15,16 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <bits/stdint-uintn.h>
-#include <bitset>
-
 #include "DataInfo.hpp"
+
+#include <bits/stdint-uintn.h>
+
+#include <bitset>
 
 namespace d4 {
 /**
    Constructor.
  */
-DataInfo::DataInfo() { info1 = 0; } // constructor
+DataInfo::DataInfo() { info1 = 0; }  // constructor
 
 /**
  * @brief Construct a new Data Info:: Data Info object
@@ -38,13 +39,13 @@ DataInfo::DataInfo(unsigned szData, unsigned nbVar, unsigned nbBitVar,
                    unsigned nbBitFormula) {
   info1 = 0;
   info1 = (uint64_t)nbVar | ((uint64_t)szData << 21) |
-          ((uint64_t)nbBitVar << 42) | ((uint64_t)nbBitFormula << 46);
+          ((uint64_t)nbBitVar << 42) | ((uint64_t)nbBitFormula << 47);
 
   assert(nbBitFormula < (1 << 5));
   assert(nbBitVar < (1 << 5));
   assert(nbVar < (1 << 21));
   assert(szData < (1 << 21));
   assert(szData == this->szData());
-} // constructor
+}  // constructor
 
-} // namespace d4
+}  // namespace d4
