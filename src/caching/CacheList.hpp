@@ -3,40 +3,39 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 
-#include "src/caching/cnf/BucketManagerCnf.hpp"
-
 #include <boost/program_options.hpp>
 #include <vector>
-
-#include "src/hashing/HashString.hpp"
-#include "src/specs/SpecManager.hpp"
 
 #include "BucketManager.hpp"
 #include "CacheCleaningManager.hpp"
 #include "CachedBucket.hpp"
+#include "src/caching/cnf/BucketManagerCnf.hpp"
+#include "src/hashing/HashString.hpp"
+#include "src/specs/SpecManager.hpp"
 
 namespace d4 {
 namespace po = boost::program_options;
-template <class T> class CacheList : public CacheManager<T> {
-private:
+template <class T>
+class CacheList : public CacheManager<T> {
+ private:
   const unsigned SIZE_HASH = 999331;
   std::vector<std::vector<CachedBucket<T>>> hashTable;
 
-public:
+ public:
   /**
    * @brief Construct a new Cache List object
    *
@@ -50,12 +49,12 @@ public:
       : CacheManager<T>(vm, nbVar, specs, out) {
     out << "c [CACHE LIST CONSTRUCTOR]\n";
     initHashTable(nbVar);
-  } // constructor
+  }  // constructor
 
   /**
    * @brief Destroy the Cache List object
    */
-  ~CacheList() { hashTable.clear(); } // destructor
+  ~CacheList() { hashTable.clear(); }  // destructor
 
   /**
    * @brief Add an entry in the cache.
@@ -74,7 +73,7 @@ public:
     this->m_sumDataSize += cb.szData();
     this->m_cacheCleaningManager->initCountCachedBucket(&cbIn);
     this->m_nbEntry++;
-  } // pushinhashtable
+  }  // pushinhashtable
 
   /**
    * @brief Research in the set of buckets if the bucket pointed by i already
@@ -90,8 +89,7 @@ public:
         hashTable[hashValue % SIZE_HASH];
 
     for (auto &cbi : listCollision) {
-      if (!cb.sameHeader(cbi))
-        continue;
+      if (!cb.sameHeader(cbi)) continue;
 
       if (!memcmp(refData, cbi.data, cbi.szData())) {
         this->m_nbPositiveHit++;
@@ -101,7 +99,7 @@ public:
 
     this->m_nbNegativeHit++;
     return NULL;
-  } // bucketAlreadyExist
+  }  // bucketAlreadyExist
 
   /**
    * Create a bucket and store it in the cache.
@@ -114,7 +112,7 @@ public:
         this->m_bucketManager->collectBuckect(varConnected);
     unsigned int hashValue = computeHash(*formulaBucket);
     pushInHashTable(*formulaBucket, hashValue, c);
-  } // createBucket
+  }  // createBucket
 
   /**
    * @brief Init the hashTable.
@@ -127,7 +125,7 @@ public:
     // init hash tables
     hashTable.clear();
     hashTable.resize(SIZE_HASH, std::vector<CachedBucket<T>>());
-  } // initHashTable
+  }  // initHashTable
 
   /**
    * @brief Clean up the cache.
@@ -140,7 +138,6 @@ public:
   unsigned removeEntry(std::function<bool(CachedBucket<T> &c)> test) {
     unsigned nbRemoveEntry = 0;
     for (auto &list : hashTable) {
-
       unsigned j = 0;
       for (unsigned i = 0; i < list.size(); i++) {
         CachedBucket<T> &cb = list[i];
@@ -156,6 +153,6 @@ public:
       list.resize(j);
     }
     return nbRemoveEntry;
-  } // removeEntry
+  }  // removeEntry
 };
-} // namespace d4
+}  // namespace d4

@@ -3,22 +3,23 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "PartitionerKahypar.hpp"
+
 #include <iostream>
 #include <vector>
 
-#include "PartitionerKahypar.hpp"
 #include "src/exceptions/OptionException.hpp"
 
 namespace d4 {
@@ -38,22 +39,21 @@ PartitionerKahypar::PartitionerKahypar(unsigned maxNodes, unsigned maxEdges,
   m_partition = std::vector<kahypar_partition_id_t>(maxNodes + 3);
 
   // set all weight to 1
-  for (unsigned i = 0; i < (maxNodes + 3); i++)
-    m_cwghts[i] = 1;
+  for (unsigned i = 0; i < (maxNodes + 3); i++) m_cwghts[i] = 1;
 
   m_mapNodes.resize(maxNodes + 3, false);
   m_markedNodes.resize(maxNodes + 3, false);
 
   context = kahypar_context_new();
   kahypar_configure_context_cut(context);
-} // constructor
+}  // constructor
 
 /**
    Destructor.
  */
 PartitionerKahypar::~PartitionerKahypar() {
   kahypar_context_free(context);
-} // destructor
+}  // destructor
 
 /**
    Get a partition from the hypergraph.
@@ -83,11 +83,9 @@ void PartitionerKahypar::computePartition(HyperGraph &hypergraph, Level level,
     }
   }
 
-  if (!elts.size())
-    return;
+  if (!elts.size()) return;
 
-  for (auto &x : elts)
-    m_markedNodes[x] = false;
+  for (auto &x : elts) m_markedNodes[x] = false;
   m_xpins[sizeXpins] = posPins;
 
   const kahypar_hypernode_id_t num_vertices = elts.size();
@@ -104,6 +102,6 @@ void PartitionerKahypar::computePartition(HyperGraph &hypergraph, Level level,
 
   for (unsigned i = 0; i < elts.size(); i++)
     partition[elts[i]] = m_partition[i];
-} // computePartition
+}  // computePartition
 
-} // namespace d4
+}  // namespace d4

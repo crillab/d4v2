@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -28,8 +28,7 @@ namespace d4 {
 */
 void BucketAllocator::init(unsigned long sizeFirstPage,
                            unsigned long sizeAdditionalPage) {
-  if (isInit)
-    return;
+  if (isInit) return;
   isInit = true;
 
   m_allMemory = m_freeMemory = m_posInData = 0;
@@ -43,7 +42,7 @@ void BucketAllocator::init(unsigned long sizeFirstPage,
   m_allocateData.push_back(m_data);
   m_allMemory += m_sizeData;
   m_usedMemory = 0;
-} // init
+}  // init
 
 /**
    Get a pointer on an available array where we can store the data we want to
@@ -85,8 +84,7 @@ char *BucketAllocator::getArray(unsigned size) {
   // take a fresh entry
   if (m_posInData + size > m_sizeData) {
     unsigned rSz = m_sizeData - m_posInData;
-    if (m_freeSpace.size() <= rSz)
-      m_freeSpace.resize(rSz + 1);
+    if (m_freeSpace.size() <= rSz) m_freeSpace.resize(rSz + 1);
     m_freeSpace[rSz].push_back(&m_data[m_posInData]);
     m_freeMemory += rSz;
 
@@ -104,7 +102,7 @@ char *BucketAllocator::getArray(unsigned size) {
   ret = &m_data[m_posInData];
   m_posInData += size;
   return ret;
-} // getArray
+}  // getArray
 
 /**
    Release some memory of a given size and store this information in
@@ -119,11 +117,10 @@ void BucketAllocator::releaseMemory(char *m, unsigned size) {
   if ((m_posInData - size) > 0 && &m_data[m_posInData - size] == m)
     m_posInData -= size;
   else {
-    if (size >= m_freeSpace.size())
-      m_freeSpace.resize(size + 1);
+    if (size >= m_freeSpace.size()) m_freeSpace.resize(size + 1);
     m_freeSpace[size].push_back(m);
     m_freeMemory += size;
   }
-} // reverseLastBucket
+}  // reverseLastBucket
 
-} // namespace d4
+}  // namespace d4

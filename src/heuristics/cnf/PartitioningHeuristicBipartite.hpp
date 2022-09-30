@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -21,23 +21,22 @@
 #include <cstdint>
 #include <vector>
 
+#include "../PartitioningHeuristic.hpp"
+#include "PartitioningHeuristicStatic.hpp"
 #include "src/hyperGraph/HyperGraphExtractor.hpp"
 #include "src/partitioner/PartitionerManager.hpp"
 #include "src/solvers/WrapperSolver.hpp"
 #include "src/specs/cnf/SpecManagerCnf.hpp"
 #include "src/utils/EquivExtractor.hpp"
 
-#include "../PartitioningHeuristic.hpp"
-#include "PartitioningHeuristicStatic.hpp"
-
 namespace d4 {
 namespace po = boost::program_options;
 class PartitioningHeuristicBipartite : public PartitioningHeuristic {
-private:
+ private:
   unsigned m_nbStatic;
   unsigned m_nbDynamic;
 
-protected:
+ protected:
   SpecManagerCnf &m_om;
   WrapperSolver &m_s;
   EquivExtractor m_em;
@@ -69,7 +68,7 @@ protected:
                          std::vector<Var> &equivClass,
                          std::vector<std::vector<Var>> &equivVar);
 
-public:
+ public:
   void computeCutSet(std::vector<Var> &component, std::vector<Var> &cutSet);
 
   void displayStat(std::ostream &out);
@@ -79,4 +78,4 @@ public:
            (component.size() > 10 && component.size() < 5000);
   }
 };
-} // namespace d4
+}  // namespace d4

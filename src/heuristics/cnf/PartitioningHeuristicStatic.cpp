@@ -3,19 +3,20 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "PartitioningHeuristicStatic.hpp"
+
 #include "PartitioningHeuristicStaticMulti.hpp"
 #include "PartitioningHeuristicStaticNone.hpp"
 #include "PartitioningHeuristicStaticSingleDual.hpp"
@@ -38,7 +39,7 @@ PartitioningHeuristicStatic::PartitioningHeuristicStatic(po::variables_map &vm,
           vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
-} // constructor
+}  // constructor
 
 /**
    Constructor.
@@ -67,15 +68,14 @@ PartitioningHeuristicStatic::PartitioningHeuristicStatic(
 
   m_isInitialized = false;
   m_pm = NULL;
-} // constructor
+}  // constructor
 
 /**
    Destructor.
 */
 PartitioningHeuristicStatic::~PartitioningHeuristicStatic() {
-  if (m_pm)
-    delete m_pm;
-} // destructor
+  if (m_pm) delete m_pm;
+}  // destructor
 
 /**
    Generate a static partitioner regarding the given option list.
@@ -116,6 +116,6 @@ PartitioningHeuristicStatic::makePartitioningHeuristicStatic(
                            __LINE__));
   ret->init(out);
   return ret;
-} // makePartitioningHeuristicStatic
+}  // makePartitioningHeuristicStatic
 
-} // namespace d4
+}  // namespace d4

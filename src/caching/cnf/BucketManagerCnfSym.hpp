@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -27,10 +27,12 @@
 #include "src/problem/ProblemTypes.hpp"
 
 namespace d4 {
-template <class T> class BucketManagerCnf;
+template <class T>
+class BucketManagerCnf;
 
-template <class T> class BucketManagerCnfSym : public BucketManagerCnf<T> {
-private:
+template <class T>
+class BucketManagerCnfSym : public BucketManagerCnf<T> {
+ private:
   std::vector<BucketSortInfo> m_vecBucketSortInfo;
   int m_unusedBucket;
   std::vector<unsigned long int> m_mapVar;
@@ -42,7 +44,7 @@ private:
   BucketInConstruction m_inConstruction;
   unsigned *m_offsetClauses;
 
-public:
+ public:
   /**
      Function called in order to initialized variables before using
 
@@ -64,12 +66,12 @@ public:
     this->m_mapVar.resize(this->m_nbVarCnf + 1, 0);
     this->m_markIdx.resize(this->m_nbClauseCnf, -1);
     this->m_offsetClauses = new unsigned[this->m_nbClauseCnf];
-  } // BucketManagerCnfSym
+  }  // BucketManagerCnfSym
 
   /**
      Destructor.
    */
-  ~BucketManagerCnfSym() { delete[] m_offsetClauses; } // destructor
+  ~BucketManagerCnfSym() { delete[] m_offsetClauses; }  // destructor
 
   /**
      Get an index store the distribution information.
@@ -90,7 +92,7 @@ public:
       m_unusedBucket = -1;
 
     return ret;
-  } // getIdxBucketSortInfo
+  }  // getIdxBucketSortInfo
 
   /**
      Push sorted, use the natural order.
@@ -103,7 +105,7 @@ public:
         std::swap(tab[i], tab[i - 1]);
       else
         break;
-  } // pushSorted
+  }  // pushSorted
 
   /**
      It is used in order to construct a sorted residual formula.
@@ -117,8 +119,8 @@ public:
   void createDistribWrTLit(const Lit &l, BucketInConstruction &inConstruction,
                            const Lit repLit) {
     unsigned currentPos =
-        inConstruction.sizeDistrib;  // the place where we put l.
-    inConstruction.sizeDistrib += 2; // save memory for l and the size.
+        inConstruction.sizeDistrib;   // the place where we put l.
+    inConstruction.sizeDistrib += 2;  // save memory for l and the size.
 
     // associate a bucket to the literal.
     unsigned counter = 0, nbElt = 0;
@@ -172,9 +174,9 @@ public:
     if (!counter)
       m_unusedBucket = ownBucket;
     else {
-      m_vecBucketSortInfo[ownBucket].reset(inConstruction.nbClauseInDistrib,
-                                           inConstruction.nbClauseInDistrib +
-                                               counter);
+      m_vecBucketSortInfo[ownBucket].reset(
+          inConstruction.nbClauseInDistrib,
+          inConstruction.nbClauseInDistrib + counter);
       inConstruction.nbClauseInDistrib += counter;
     }
 
@@ -185,7 +187,7 @@ public:
       inConstruction.distrib[currentPos + 1] =
           inConstruction.sizeDistrib - currentPos - 2;
     }
-  } // createDistribWrTLit
+  }  // createDistribWrTLit
 
   /**
      Collect the clause distribution. The result is stored in distrib.
@@ -201,8 +203,7 @@ public:
                                  BucketInConstruction &inConstruction) {
     // sort the set of clauses
     for (auto &v : component) {
-      if (this->m_specManager.varIsAssigned(v))
-        continue;
+      if (this->m_specManager.varIsAssigned(v)) continue;
       Lit l = Lit::makeLitFalse(v);
       createDistribWrTLit(l, inConstruction, l);
       createDistribWrTLit(~l, inConstruction, ~l);
@@ -237,10 +238,10 @@ public:
         inConstruction.shiftedIndexClause[i] = inConstruction.sizeDistrib;
       inConstruction.markedAsRedundant[i] = false;
     }
-    inConstruction.nbClauseInDistrib = index; // resize
+    inConstruction.nbClauseInDistrib = index;  // resize
 
     return realSizeDistrib;
-  } // collectDistrib
+  }  // collectDistrib
 
   /**
      Prepare the data to store a new bucket.
@@ -252,7 +253,7 @@ public:
     inConstruction.reinit();
     m_unusedBucket = -1;
     m_vecBucketSortInfo.resize(0);
-  } // initSortBucket
+  }  // initSortBucket
 
   inline void showListBucketSort(std::vector<BucketSortInfo> &v,
                                  std::ostream &out) {
@@ -261,7 +262,7 @@ public:
       out << "[" << e.start << " " << e.end << " " << e.counter << " "
           << e.redirected << "]";
     out << "\n";
-  } // showListBucketSort
+  }  // showListBucketSort
 
   /**
      Compute the number of bytes requiered to store the data.
@@ -269,7 +270,7 @@ public:
   inline unsigned computeNeededBytes(unsigned nBda, unsigned nbD,
                                      unsigned nbEltData, unsigned nbEltDist) {
     return (nBda * nbEltData) + (nbD * (nbEltDist << 1));
-  } // computeNeededBytes
+  }  // computeNeededBytes
 
   /**
      Store the variables respecting the information of size concerning the type
@@ -288,7 +289,7 @@ public:
     }
 
     return p;
-  } // storeVariables
+  }  // storeVariables
 
   /**
    Store the variables respecting the information of size concerning the type T
@@ -302,8 +303,7 @@ public:
   void *storeDistribInfo(void *data, BucketInConstruction &inConstruction) {
     U *p = static_cast<U *>(data);
     for (unsigned i = 0; i <= inConstruction.maxSizeClause; i++) {
-      if (!inConstruction.distribDiffSize[i])
-        continue;
+      if (!inConstruction.distribDiffSize[i]) continue;
       *p = static_cast<U>(i);
       p++;
       *p = static_cast<U>(inConstruction.distribDiffSize[i]);
@@ -311,7 +311,7 @@ public:
     }
 
     return p;
-  } // storeDistribInfo
+  }  // storeDistribInfo
 
   /**
      Store the formula representation respecting the information of size
@@ -334,8 +334,7 @@ public:
                      BucketInConstruction &inConstruction) {
     // we map the variable to another index regarding their poistion in
     // component.
-    for (unsigned i = 0; i < component.size(); i++)
-      m_mapVar[component[i]] = i;
+    for (unsigned i = 0; i < component.size(); i++) m_mapVar[component[i]] = i;
 
     // get the information about the starting offset for the different clause
     // size.
@@ -349,8 +348,7 @@ public:
     // allocate an offset for each clauses.
     for (unsigned i = 0; i < inConstruction.nbClauseInDistrib; i++) {
       unsigned szClause = inConstruction.shiftedSizeClause[i];
-      if (!szClause)
-        continue;
+      if (!szClause) continue;
 
       m_offsetClauses[i] = memoryPlaceWrtSizeClause[szClause];
       memoryPlaceWrtSizeClause[szClause] += szClause;
@@ -371,8 +369,7 @@ public:
 
         unsigned idx =
             inConstruction.shiftedIndexClause[inConstruction.distrib[i++]];
-        if (idx >= inConstruction.nbClauseInDistrib)
-          continue;
+        if (idx >= inConstruction.nbClauseInDistrib) continue;
         p[m_offsetClauses[idx]] = l;
         m_offsetClauses[idx]++;
       }
@@ -380,7 +377,7 @@ public:
 
     p += offSet;
     return p;
-  } // storeClauses
+  }  // storeClauses
 
   /**
      Compute from the m_distribDiffSize the number of different size and the
@@ -410,7 +407,7 @@ public:
         nbDiffClauseSize++;
         nbLit += inConstruction.distribDiffSize[i] * i;
       }
-  } // getInfoDistributionSize
+  }  // getInfoDistributionSize
 
   /**
      Transfer the formula store in distib in a table given in parameter.
@@ -421,7 +418,7 @@ public:
   */
   inline void storeFormula(std::vector<Var> &component, CachedBucket<T> &b) {
     initSortBucket(m_inConstruction);
-    collectDistrib(component, m_inConstruction); // built the sorted formula
+    collectDistrib(component, m_inConstruction);  // built the sorted formula
 
     // get information about the clause distribution
     unsigned nbLit = 0, nbVar = component.size(), maxNbSizeClause,
@@ -441,39 +438,39 @@ public:
 
     // store the clause distribution of the size.
     switch (nbODistrib) {
-    case 1:
-      p = storeDistribInfo<uint8_t>(p, m_inConstruction);
-      break;
-    case 2:
-      p = storeDistribInfo<uint16_t>(p, m_inConstruction);
-      break;
-    case 4:
-      p = storeDistribInfo<uint32_t>(p, m_inConstruction);
-      break;
-    default:
-      throw(BucketException("Bad number of bytes", __FILE__, __LINE__));
+      case 1:
+        p = storeDistribInfo<uint8_t>(p, m_inConstruction);
+        break;
+      case 2:
+        p = storeDistribInfo<uint16_t>(p, m_inConstruction);
+        break;
+      case 4:
+        p = storeDistribInfo<uint32_t>(p, m_inConstruction);
+        break;
+      default:
+        throw(BucketException("Bad number of bytes", __FILE__, __LINE__));
     }
     assert(static_cast<char *>(p) ==
            &data[nbODistrib * (nbDiffClauseSize << 1)]);
 
     // store the clauses.
     switch (nbOLit) {
-    case 1:
-      p = storeClauses<uint8_t>(p, component, m_inConstruction);
-      break;
-    case 2:
-      p = storeClauses<uint16_t>(p, component, m_inConstruction);
-      break;
-    case 4:
-      p = storeClauses<uint32_t>(p, component, m_inConstruction);
-      break;
-    default:
-      throw(BucketException("Bad number of bytes", __FILE__, __LINE__));
+      case 1:
+        p = storeClauses<uint8_t>(p, component, m_inConstruction);
+        break;
+      case 2:
+        p = storeClauses<uint16_t>(p, component, m_inConstruction);
+        break;
+      case 4:
+        p = storeClauses<uint32_t>(p, component, m_inConstruction);
+        break;
+      default:
+        throw(BucketException("Bad number of bytes", __FILE__, __LINE__));
     }
     assert(static_cast<char *>(p) == &data[szData]);
 
     // put the information into the bucket
     assert(0);
-  } // storeFormula
+  }  // storeFormula
 };
-} // namespace d4
+}  // namespace d4

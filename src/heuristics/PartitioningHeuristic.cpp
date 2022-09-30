@@ -3,30 +3,30 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "PartitioningHeuristic.hpp"
+
 #include <bitset>
 
-#include "src/exceptions/FactoryException.hpp"
-#include "src/utils/AtMost1Extractor.hpp"
-
-#include "PartitioningHeuristic.hpp"
 #include "PartitioningHeuristicNone.hpp"
 #include "cnf/PartitioningHeuristicBipartiteDual.hpp"
 #include "cnf/PartitioningHeuristicBipartitePrimal.hpp"
 #include "cnf/PartitioningHeuristicStaticMulti.hpp"
 #include "cnf/PartitioningHeuristicStaticSingleDual.hpp"
 #include "cnf/PartitioningHeuristicStaticSinglePrimal.hpp"
+#include "src/exceptions/FactoryException.hpp"
+#include "src/utils/AtMost1Extractor.hpp"
 
 namespace d4 {
 
@@ -35,11 +35,11 @@ namespace d4 {
 
    @param[in] out, the stream where is print out the log.
  */
-PartitioningHeuristic *
-PartitioningHeuristic::makePartitioningHeuristicNone(std::ostream &out) {
+PartitioningHeuristic *PartitioningHeuristic::makePartitioningHeuristicNone(
+    std::ostream &out) {
   out << "c [CONSTRUCTOR] Partitioner manager: none\n";
   return new PartitioningHeuristicNone();
-} // makePartitioningHeuristicNone
+}  // makePartitioningHeuristicNone
 
 /**
    Create a partitioner.
@@ -55,8 +55,7 @@ PartitioningHeuristic *PartitioningHeuristic::makePartitioningHeuristic(
   std::string meth = vm["partitioning-heuristic"].as<std::string>();
   std::string inType = vm["input-type"].as<std::string>();
 
-  if (meth == "none")
-    return makePartitioningHeuristicNone(out);
+  if (meth == "none") return makePartitioningHeuristicNone(out);
 
   bool reduceFormula =
       vm["partitioning-heuristic-simplification-hyperedge"].as<bool>();
@@ -103,7 +102,7 @@ PartitioningHeuristic *PartitioningHeuristic::makePartitioningHeuristic(
 
   throw(FactoryException("Cannot create a PartitioningHeuristic", __FILE__,
                          __LINE__));
-} // makePartitioningHeuristic
+}  // makePartitioningHeuristic
 
 /**
    Associate for each variable in the component an equivalence class.
@@ -129,9 +128,8 @@ void PartitioningHeuristic::computeEquivClass(
 
   for (auto &c : equivVar) {
     Var vi = c.back();
-    for (auto &v : c)
-      equivClass[v] = vi;
+    for (auto &v : c) equivClass[v] = vi;
   }
-} // computeEquivclass
+}  // computeEquivclass
 
-} // namespace d4
+}  // namespace d4

@@ -3,23 +3,24 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "PartitionerPatoh.hpp"
+
 #include <iostream>
 #include <vector>
 
 #include "3rdParty/patoh/patoh.h"
-#include "PartitionerPatoh.hpp"
 #include "src/exceptions/OptionException.hpp"
 
 namespace d4 {
@@ -40,12 +41,11 @@ PartitionerPatoh::PartitionerPatoh(unsigned maxNodes, unsigned maxEdges,
   m_cwghts = new int[(maxNodes + 3)];
 
   // set all weight to 1
-  for (unsigned i = 0; i < (maxNodes + 3); i++)
-    m_cwghts[i] = 1;
+  for (unsigned i = 0; i < (maxNodes + 3); i++) m_cwghts[i] = 1;
 
   m_mapNodes.resize(maxNodes + 3, false);
   m_markedNodes.resize(maxNodes + 3, false);
-} // constructor
+}  // constructor
 
 /**
    Destructor.
@@ -56,7 +56,7 @@ PartitionerPatoh::~PartitionerPatoh() {
   delete[] m_xpins;
   delete[] m_partvec;
   delete[] m_cwghts;
-} // destructor
+}  // destructor
 
 /**
    Get a partition from the hypergraph.
@@ -86,25 +86,24 @@ void PartitionerPatoh::computePartition(HyperGraph &hypergraph, Level level,
     }
   }
 
-  for (auto &x : elts)
-    m_markedNodes[x] = false;
+  for (auto &x : elts) m_markedNodes[x] = false;
   m_xpins[sizeXpins] = posPins;
 
   // hypergraph partitioner
   PaToH_Parameters args;
   switch (level) {
-  case NORMAL:
-    PaToH_Initialize_Parameters(&args, PATOH_CONPART, PATOH_SUGPARAM_DEFAULT);
-    break;
-  case SPEED:
-    PaToH_Initialize_Parameters(&args, PATOH_CONPART, PATOH_SUGPARAM_SPEED);
-    break;
-  case QUALITY:
-    PaToH_Initialize_Parameters(&args, PATOH_CONPART, PATOH_SUGPARAM_QUALITY);
-    break;
-  default:
-    throw(OptionException("Wrong option given to the partioner.", __FILE__,
-                          __LINE__));
+    case NORMAL:
+      PaToH_Initialize_Parameters(&args, PATOH_CONPART, PATOH_SUGPARAM_DEFAULT);
+      break;
+    case SPEED:
+      PaToH_Initialize_Parameters(&args, PATOH_CONPART, PATOH_SUGPARAM_SPEED);
+      break;
+    case QUALITY:
+      PaToH_Initialize_Parameters(&args, PATOH_CONPART, PATOH_SUGPARAM_QUALITY);
+      break;
+    default:
+      throw(OptionException("Wrong option given to the partioner.", __FILE__,
+                            __LINE__));
   }
 
   args._k = 2;
@@ -116,9 +115,8 @@ void PartitionerPatoh::computePartition(HyperGraph &hypergraph, Level level,
   PaToH_Part(&args, elts.size(), sizeXpins, 1, 0, m_cwghts, NULL, m_xpins,
              m_pins, NULL, m_partvec, m_partweights, &cut);
 
-  for (unsigned i = 0; i < elts.size(); i++)
-    partition[elts[i]] = m_partvec[i];
+  for (unsigned i = 0; i < elts.size(); i++) partition[elts[i]] = m_partvec[i];
   PaToH_Free();
-} // computePartition
+}  // computePartition
 
-} // namespace d4
+}  // namespace d4

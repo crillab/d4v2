@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -22,6 +22,9 @@
 #include <iomanip>
 #include <iostream>
 
+#include "Counter.hpp"
+#include "DataBranch.hpp"
+#include "MethodManager.hpp"
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"
 #include "src/caching/TmpEntry.hpp"
@@ -35,10 +38,6 @@
 #include "src/specs/SpecManager.hpp"
 #include "src/utils/MemoryStat.hpp"
 
-#include "Counter.hpp"
-#include "DataBranch.hpp"
-#include "MethodManager.hpp"
-
 #define NB_SEP_MC 104
 #define MASK_SHOWRUN_MC ((2 << 13) - 1)
 #define WIDTH_PRINT_COLUMN_MC 12
@@ -50,11 +49,12 @@
 
 namespace d4 {
 namespace po = boost::program_options;
-template <class T> class Counter;
+template <class T>
+class Counter;
 
 template <class T, class U>
 class DpllStyleMethod : public MethodManager, public Counter<T> {
-private:
+ private:
   bool optDomConst;
   bool optReversePolarity;
 
@@ -89,7 +89,7 @@ private:
 
   Operation<T, U> *m_operation;
 
-public:
+ public:
   /**
      Constructor.
 
@@ -127,8 +127,7 @@ public:
     m_isDecisionVariable.clear();
     m_isDecisionVariable.resize(m_problem->getNbVar() + 1,
                                 !m_problem->getNbSelectedVar());
-    for (auto v : m_problem->getSelectedVar())
-      m_isDecisionVariable[v] = true;
+    for (auto v : m_problem->getSelectedVar()) m_isDecisionVariable[v] = true;
     m_currentPrioritySet.resize(m_problem->getNbVar() + 1, false);
 
     // select the partitioner regarding if it projected model counting or not.
@@ -160,7 +159,7 @@ public:
                                                      m_specs, m_solver, m_out);
     m_operation = static_cast<Operation<T, U> *>(op);
     m_out << "c\n";
-  } // constructor
+  }  // constructor
 
   /**
      Destructor.
@@ -174,9 +173,9 @@ public:
     delete m_hPhase;
     delete m_hCutSet;
     delete m_cache;
-  } // destructor
+  }  // destructor
 
-private:
+ private:
   /**
      Expel from a set of variables the ones they are marked as being decidable.
 
@@ -187,15 +186,13 @@ private:
    */
   void expelNoDecisionVar(std::vector<Var> &vars,
                           std::vector<bool> &isDecisionVariable) {
-    if (!m_isProjectedMode)
-      return;
+    if (!m_isProjectedMode) return;
 
     unsigned j = 0;
     for (unsigned i = 0; i < vars.size(); i++)
-      if (isDecisionVariable[vars[i]])
-        vars[j++] = vars[i];
+      if (isDecisionVariable[vars[i]]) vars[j++] = vars[i];
     vars.resize(j);
-  } // expelNoDecisionVar
+  }  // expelNoDecisionVar
 
   /**
      Expel from a set of variables the ones they are marked as being decidable.
@@ -207,15 +204,13 @@ private:
    */
   void expelNoDecisionLit(std::vector<Lit> &lits,
                           std::vector<bool> &isDecisionVariable) {
-    if (!m_isProjectedMode)
-      return;
+    if (!m_isProjectedMode) return;
 
     unsigned j = 0;
     for (unsigned i = 0; i < lits.size(); i++)
-      if (isDecisionVariable[lits[i].var()])
-        lits[j++] = lits[i];
+      if (isDecisionVariable[lits[i].var()]) lits[j++] = lits[i];
     lits.resize(j);
-  } // expelNoDecisionLit
+  }  // expelNoDecisionLit
 
   /**
      Compute the current priority set.
@@ -229,12 +224,11 @@ private:
                                     std::vector<Var> &currPriority) {
     currPriority.resize(0);
     m_stampIdx++;
-    for (auto &v : connected)
-      m_stampVar[v] = m_stampIdx;
+    for (auto &v : connected) m_stampVar[v] = m_stampIdx;
     for (auto &v : priorityVar)
       if (m_stampVar[v] == m_stampIdx && !m_specs->varIsAssigned(v))
         currPriority.push_back(v);
-  } // computePrioritySet
+  }  // computePrioritySet
 
   /**
      Print out information about the solving process.
@@ -252,7 +246,7 @@ private:
         << std::setw(WIDTH_PRINT_COLUMN_MC) << MemoryStat::memUsedPeak() << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbDecisionNode << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << m_callPartitioner << "|\n";
-  } // showInter
+  }  // showInter
 
   /**
      Print out a line of dashes.
@@ -261,10 +255,9 @@ private:
    */
   inline void separator(std::ostream &out) {
     out << "c ";
-    for (int i = 0; i < NB_SEP_MC; i++)
-      out << "-";
+    for (int i = 0; i < NB_SEP_MC; i++) out << "-";
     out << "\n";
-  } // separator
+  }  // separator
 
   /**
      Print out the header information.
@@ -284,7 +277,7 @@ private:
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#cutter"
         << "|\n";
     separator(out);
-  } // showHeader
+  }  // showHeader
 
   /**
      Print out information when it is requiered.
@@ -292,11 +285,9 @@ private:
      @param[in] out, the stream we use to print out information.
    */
   inline void showRun(std::ostream &out) {
-    if (!(m_nbCallCall & (MASK_HEADER)))
-      showHeader(out);
-    if (m_nbCallCall && !(m_nbCallCall & MASK_SHOWRUN_MC))
-      showInter(out);
-  } // showRun
+    if (!(m_nbCallCall & (MASK_HEADER))) showHeader(out);
+    if (m_nbCallCall && !(m_nbCallCall & MASK_SHOWRUN_MC)) showInter(out);
+  }  // showRun
 
   /**
      Print out the final stat.
@@ -320,7 +311,7 @@ private:
     }
     out << "c Final time: " << getTimer() << "\n";
     out << "c\n";
-  } // printFinalStat
+  }  // printFinalStat
 
   /**
      Initialize the assumption in order to compute compiled formula under this
@@ -332,16 +323,15 @@ private:
     m_solver->restart();
     m_solver->popAssumption(m_solver->getAssumption().size());
     m_solver->setAssumption(assums);
-  } // initAssumption
+  }  // initAssumption
 
   /**
      Decide if the cache is realized or not.
    */
   bool cacheIsActivated(std::vector<Var> &connected) {
-    if (!m_optCached)
-      return false;
+    if (!m_optCached) return false;
     return m_cache->isActivated(connected.size());
-  } // cacheIsActivated
+  }  // cacheIsActivated
 
   /**
      Call the CNF formula into a FBDD.
@@ -359,10 +349,9 @@ private:
     showRun(out);
     m_nbCallCall++;
 
-    if (!m_solver->solve(setOfVar))
-      return m_operation->manageBottom();
+    if (!m_solver->solve(setOfVar)) return m_operation->manageBottom();
 
-    m_solver->whichAreUnits(setOfVar, unitsLit); // collect unit literals
+    m_solver->whichAreUnits(setOfVar, unitsLit);  // collect unit literals
     m_specs->preUpdate(unitsLit);
 
     // compute the connected composant
@@ -382,8 +371,7 @@ private:
         TmpEntry<U> cb = cacheActivated ? m_cache->searchInCache(connected)
                                         : NULL_CACHE_ENTRY;
 
-        if (cacheActivated)
-          nbTestCacheVarSize[connected.size()]++;
+        if (cacheActivated) nbTestCacheVarSize[connected.size()]++;
         if (cacheActivated && cb.defined) {
           nbPosHitCacheVarSize[connected.size()]++;
           tab[cp] = cb.getValue();
@@ -391,20 +379,19 @@ private:
           // recursive call
           tab[cp] = computeDecisionNode(connected, out);
 
-          if (cacheActivated)
-            m_cache->addInCache(cb, tab[cp]);
+          if (cacheActivated) m_cache->addInCache(cb, tab[cp]);
         }
       }
 
       m_specs->postUpdate(unitsLit);
       return m_operation->manageDecomposableAnd(tab, nbComponent);
-    } // else we have a tautology
+    }  // else we have a tautology
 
     m_specs->postUpdate(unitsLit);
     expelNoDecisionLit(unitsLit, m_isDecisionVariable);
 
     return m_operation->createTop();
-  } // compute_
+  }  // compute_
 
   /**
    * @brief Set the Current Priority.
@@ -413,9 +400,8 @@ private:
    */
   inline void setCurrentPriority(std::vector<Var> &cutSet) {
     for (auto &v : cutSet)
-      if (m_isDecisionVariable[v])
-        m_currentPrioritySet[v] = true;
-  } // setCurrentPriority
+      if (m_isDecisionVariable[v]) m_currentPrioritySet[v] = true;
+  }  // setCurrentPriority
 
   /**
    * @brief Unset the Current Priority.
@@ -424,9 +410,8 @@ private:
    */
   inline void unsetCurrentPriority(std::vector<Var> &cutSet) {
     for (auto &v : cutSet)
-      if (m_isDecisionVariable[v])
-        m_currentPrioritySet[v] = false;
-  } // setCurrentPriority
+      if (m_isDecisionVariable[v]) m_currentPrioritySet[v] = false;
+  }  // setCurrentPriority
 
   /**
      This function select a variable and compile a decision node.
@@ -440,11 +425,9 @@ private:
     std::vector<Var> cutSet;
     bool hasPriority = false, hasVariable = false;
     for (auto v : connected) {
-      if (m_specs->varIsAssigned(v) || !m_isDecisionVariable[v])
-        continue;
+      if (m_specs->varIsAssigned(v) || !m_isDecisionVariable[v]) continue;
       hasVariable = true;
-      if ((hasPriority = m_currentPrioritySet[v]))
-        break;
+      if ((hasPriority = m_currentPrioritySet[v])) break;
     }
 
     if (hasVariable && !hasPriority && m_hCutSet->isReady(connected)) {
@@ -483,7 +466,7 @@ private:
 
     unsetCurrentPriority(cutSet);
     return m_operation->manageDeterministOr(b, 2);
-  } // computeDecisionNode
+  }  // computeDecisionNode
 
   /**
      Compute U using the trace of a SAT solver.
@@ -505,9 +488,9 @@ private:
     DataBranch<U> b;
     b.d = compute_(setOfVar, b.unitLits, b.freeVars, out);
     return m_operation->manageBranch(b);
-  } // compute
+  }  // compute
 
-public:
+ public:
   /**
      Given an assumption, we compute the number of models.  That is different
      from the query strategy, where we first compute and then condition the
@@ -527,18 +510,16 @@ public:
     // get the unit not in setOfVar.
     std::vector<Lit> shadowUnits;
     m_stampIdx++;
-    for (auto &v : setOfVar)
-      m_stampVar[v] = m_stampIdx;
+    for (auto &v : setOfVar) m_stampVar[v] = m_stampIdx;
     for (auto &l : assumption)
-      if (m_stampVar[l.var()] != m_stampIdx)
-        shadowUnits.push_back(l);
+      if (m_stampVar[l.var()] != m_stampIdx) shadowUnits.push_back(l);
 
     m_specs->preUpdate(shadowUnits);
     U result = compute(setOfVar, out, false);
     m_specs->postUpdate(shadowUnits);
 
     return m_operation->count(result);
-  } // count
+  }  // count
 
   /**
      Run the DPLL style algorithm with the operation manager.
@@ -547,12 +528,11 @@ public:
    */
   void run(po::variables_map &vm) {
     std::vector<Var> setOfVar;
-    for (int i = 1; i <= m_specs->getNbVariable(); i++)
-      setOfVar.push_back(i);
+    for (int i = 1; i <= m_specs->getNbVariable(); i++) setOfVar.push_back(i);
 
     U result = compute(setOfVar, m_out);
     printFinalStats(m_out);
     m_operation->manageResult(result, vm, m_out);
-  } // run
+  }  // run
 };
-} // namespace d4
+}  // namespace d4

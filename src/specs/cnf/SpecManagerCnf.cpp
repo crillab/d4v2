@@ -3,23 +3,24 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm> // std::sort
+#include "SpecManagerCnf.hpp"
+
+#include <algorithm>  // std::sort
 #include <iostream>
 
-#include "SpecManagerCnf.hpp"
 #include "SpecManagerCnfDyn.hpp"
 #include "src/methods/nnf/Node.hpp"
 #include "src/problem/ProblemTypes.hpp"
@@ -44,11 +45,9 @@ SpecManagerCnf::SpecManagerCnf(ProblemManager &p) : m_nbVar(p.getNbVar()) {
   unsigned count = 0;
   std::vector<std::vector<int>> occurrence((m_nbVar + 1) << 1);
   for (unsigned i = 0; i < m_clauses.size(); i++) {
-    if (m_clauses[i].size() > 2)
-      m_clausesNotBin.push_back(i);
+    if (m_clauses[i].size() > 2) m_clausesNotBin.push_back(i);
 
-    for (auto &l : m_clauses[i])
-      occurrence[l.intern()].push_back(i);
+    for (auto &l : m_clauses[i]) occurrence[l.intern()].push_back(i);
     count += m_clauses[i].size();
 
     if (m_clauses[i].size() > m_maxSizeClause)
@@ -96,7 +95,7 @@ SpecManagerCnf::SpecManagerCnf(ProblemManager &p) : m_nbVar(p.getNbVar()) {
   }
 
   m_infoCluster.resize(p.getNbVar() + nbClause + 1, {0, 0, -1});
-} // construtor
+}  // construtor
 
 /**
  * @brief Destroy the Spec Manager Cnf:: Spec Manager Cnf object
@@ -104,7 +103,7 @@ SpecManagerCnf::SpecManagerCnf(ProblemManager &p) : m_nbVar(p.getNbVar()) {
  */
 SpecManagerCnf::~SpecManagerCnf() {
   delete[] m_dataOccurrenceMemory;
-} // destructor
+}  // destructor
 
 /**
    Look all the formula in order to compute the connected component
@@ -127,14 +126,13 @@ int SpecManagerCnf::computeConnectedComponent(
   }
 
   for (auto const &v : setOfVar) {
-    if (m_currentValue[v] != l_Undef)
-      continue;
+    if (m_currentValue[v] != l_Undef) continue;
 
     // visit the index clauses
     Var rootV = v;
     Lit l = Lit::makeLit(v, false);
 
-    for (unsigned i = 0; i < 2; i++) { // both literals.
+    for (unsigned i = 0; i < 2; i++) {  // both literals.
       IteratorIdxClause listIndex = getVecIdxClause(l);
 
       for (int *ptr = listIndex.start; ptr != listIndex.end; ptr++) {
@@ -154,8 +152,7 @@ int SpecManagerCnf::computeConnectedComponent(
           }
 
           // already in the same component.
-          if (rootV == rootW)
-            continue;
+          if (rootV == rootW) continue;
 
           // union.
           if (m_infoCluster[rootV].size < m_infoCluster[rootW].size) {
@@ -178,8 +175,7 @@ int SpecManagerCnf::computeConnectedComponent(
   freeVar.resize(0);
 
   for (auto const &v : setOfVar) {
-    if (m_currentValue[v] != l_Undef)
-      continue;
+    if (m_currentValue[v] != l_Undef) continue;
 
     if (m_infoCluster[v].parent == v && m_infoCluster[v].size == 1) {
       freeVar.push_back(v);
@@ -208,11 +204,10 @@ int SpecManagerCnf::computeConnectedComponent(
 
   // restore for the next run.
   resetUnMark();
-  for (auto &v : rootSet)
-    m_infoCluster[v].pos = -1;
+  for (auto &v : rootSet) m_infoCluster[v].pos = -1;
 
   return varCo.size();
-} // computeConnectedComponent
+}  // computeConnectedComponent
 
 /**
    Test if a given clause is actually satisfied under the current
@@ -225,7 +220,7 @@ int SpecManagerCnf::computeConnectedComponent(
 bool SpecManagerCnf::isSatisfiedClause(unsigned idx) {
   assert(idx < m_clauses.size());
   return m_infoClauses[idx].nbSat;
-} // isSatisfiedClause
+}  // isSatisfiedClause
 
 /**
    Test if a given clause is actually satisfied under the current
@@ -237,16 +232,13 @@ bool SpecManagerCnf::isSatisfiedClause(unsigned idx) {
 */
 bool SpecManagerCnf::isSatisfiedClause(std::vector<Lit> &c) {
   for (auto &l : c) {
-    if (!litIsAssigned(l))
-      continue;
-    if (l.sign() && m_currentValue[l.var()] == l_False)
-      return true;
-    if (!l.sign() && m_currentValue[l.var()] == l_True)
-      return true;
+    if (!litIsAssigned(l)) continue;
+    if (l.sign() && m_currentValue[l.var()] == l_False) return true;
+    if (!l.sign() && m_currentValue[l.var()] == l_True) return true;
   }
 
   return false;
-} // isSatisfiedClause
+}  // isSatisfiedClause
 
 /**
    Test at the same time if a given clause is actually satisfied under
@@ -262,38 +254,33 @@ bool SpecManagerCnf::isSatisfiedClause(std::vector<Lit> &c) {
 */
 bool SpecManagerCnf::isNotSatisfiedClauseAndInComponent(
     int idx, std::vector<bool> &m_inCurrentComponent) {
-  if (m_infoClauses[idx].nbSat)
-    return false;
+  if (m_infoClauses[idx].nbSat) return false;
   assert(m_infoClauses[idx].watcher != lit_Undef);
   assert(!litIsAssigned(m_infoClauses[idx].watcher));
   return m_inCurrentComponent[m_infoClauses[idx].watcher.var()];
-} // isSatisfiedClause
+}  // isSatisfiedClause
 
 void SpecManagerCnf::getCurrentClauses(std::vector<unsigned> &idxClauses,
                                        std::vector<Var> &component) {
   idxClauses.resize(0);
-  for (auto &v : component)
-    m_inCurrentComponent[v] = true;
+  for (auto &v : component) m_inCurrentComponent[v] = true;
   for (unsigned i = 0; i < m_clauses.size(); i++) {
     if (isNotSatisfiedClauseAndInComponent(i, m_inCurrentComponent))
       idxClauses.push_back(i);
   }
-  for (auto &v : component)
-    m_inCurrentComponent[v] = false;
-} // getCurrentclauses
+  for (auto &v : component) m_inCurrentComponent[v] = false;
+}  // getCurrentclauses
 
 void SpecManagerCnf::getCurrentClausesNotBin(std::vector<unsigned> &idxClauses,
                                              std::vector<Var> &component) {
   idxClauses.resize(0);
-  for (auto &v : component)
-    m_inCurrentComponent[v] = true;
+  for (auto &v : component) m_inCurrentComponent[v] = true;
   for (auto &i : m_clausesNotBin) {
     if (isNotSatisfiedClauseAndInComponent(i, m_inCurrentComponent))
       idxClauses.push_back(i);
   }
-  for (auto &v : component)
-    m_inCurrentComponent[v] = false;
-} // getCurrentclauses
+  for (auto &v : component) m_inCurrentComponent[v] = false;
+}  // getCurrentclauses
 
 void SpecManagerCnf::showFormula(std::ostream &out) {
   out << "p cnf " << getNbVariable() << " " << getNbClause() << "\n";
@@ -301,12 +288,11 @@ void SpecManagerCnf::showFormula(std::ostream &out) {
     showListLit(out, cl);
     out << "0\n";
   }
-} // showFormula
+}  // showFormula
 
 void SpecManagerCnf::showTrail(std::ostream &out) {
   for (int i = 0; i < getNbVariable(); i++) {
-    if (!varIsAssigned(i))
-      continue;
+    if (!varIsAssigned(i)) continue;
     Lit l = Lit::makeLit(i, false);
     if (litIsAssignedToTrue(l))
       out << l << " ";
@@ -314,17 +300,15 @@ void SpecManagerCnf::showTrail(std::ostream &out) {
       out << ~l << " ";
   }
   out << "\n";
-} // showFormula
+}  // showFormula
 
 void SpecManagerCnf::showCurrentFormula(std::ostream &out) {
   out << "p cnf " << getNbVariable() << " " << getNbClause() << "\n";
   for (unsigned i = 0; i < m_clauses.size(); i++) {
-    if (m_infoClauses[i].nbSat)
-      continue;
+    if (m_infoClauses[i].nbSat) continue;
     for (auto &l : m_clauses[i])
-      if (!litIsAssigned(l))
-        out << l << " ";
+      if (!litIsAssigned(l)) out << l << " ";
     out << "0\n";
   }
-} // showFormula
-} // namespace d4
+}  // showFormula
+}  // namespace d4

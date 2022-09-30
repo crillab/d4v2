@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -21,26 +21,27 @@
 #include <functional>
 #include <vector>
 
-#include "src/hashing/HashString.hpp"
-#include "src/specs/SpecManager.hpp"
-
 #include "BucketManager.hpp"
 #include "CacheCleaningManager.hpp"
+#include "CacheList.hpp"
+#include "CacheNoCollision.hpp"
 #include "CachedBucket.hpp"
 #include "TmpEntry.hpp"
 #include "src/exceptions/FactoryException.hpp"
-
-#include "CacheList.hpp"
-#include "CacheNoCollision.hpp"
+#include "src/hashing/HashString.hpp"
+#include "src/specs/SpecManager.hpp"
 
 namespace d4 {
 namespace po = boost::program_options;
 
-template <class T> class CacheCleaningManager;
-template <class T> class BucketManager;
+template <class T>
+class CacheCleaningManager;
+template <class T>
+class BucketManager;
 
-template <class T> class CacheManager {
-public:
+template <class T>
+class CacheManager {
+ public:
   bool verb;
 
   // statistics
@@ -89,7 +90,7 @@ public:
         CacheCleaningManager<T>::makeCacheCleaningManager(vm, this, nbVar, out);
     m_bucketManager =
         BucketManager<T>::makeBucketManager(vm, this, *specs, out);
-  } // constructor
+  }  // constructor
 
   /**
    * @brief Destroy the Cache Manager object
@@ -97,7 +98,7 @@ public:
   virtual ~CacheManager() {
     delete m_cacheCleaningManager;
     delete m_bucketManager;
-  } // destructor
+  }  // destructor
 
   /**
    * @brief Factory.
@@ -116,12 +117,11 @@ public:
 
     if (method == "no-collision")
       return new CacheNoCollision<T>(vm, nbVar, specs, out);
-    if (method == "list")
-      return new CacheList<T>(vm, nbVar, specs, out);
+    if (method == "list") return new CacheList<T>(vm, nbVar, specs, out);
 
     throw(
         FactoryException("Cannot create a ProblemManager", __FILE__, __LINE__));
-  } // makeCacheManager
+  }  // makeCacheManager
 
   virtual void pushInHashTable(CachedBucket<T> &cb, unsigned int hashValue,
                                T val) = 0;
@@ -129,8 +129,8 @@ public:
                                               unsigned hashValue) = 0;
   virtual void initHashTable(unsigned maxVar) = 0;
 
-  virtual unsigned
-  removeEntry(std::function<bool(CachedBucket<T> &c)> test) = 0;
+  virtual unsigned removeEntry(
+      std::function<bool(CachedBucket<T> &c)> test) = 0;
 
   /**
    * @brief Get the memory used by the cache (to store the ).
@@ -161,7 +161,7 @@ public:
    */
   inline void releaseMemory(char *data, int size) {
     this->m_bucketManager->releaseMemory(data, size);
-  } // releaseMemory
+  }  // releaseMemory
 
   inline void printCacheInformation(std::ostream &out) {
     out << "c \033[1m\033[34mCache Information\033[0m\n";
@@ -169,7 +169,7 @@ public:
     out << "c Number of negative hit: " << m_nbNegativeHit << "\n";
     m_cacheCleaningManager->printCleaningInfo(out);
     out << "c\n";
-  } // printCacheInformation
+  }  // printCacheInformation
 
   /**
    * @brief Compute the hash value of an entry.
@@ -179,7 +179,7 @@ public:
    */
   inline unsigned computeHash(CachedBucket<T> &bucket) {
     return hashMethod.hash(bucket.data, bucket.szData(), bucket.getInfo());
-  } // computeHash
+  }  // computeHash
 
   /**
    * @brief Add an entry in the cache structure.
@@ -189,7 +189,7 @@ public:
    */
   void addInCache(TmpEntry<T> &cb, T val) {
     pushInHashTable(cb.e, cb.hashValue, val);
-  } // addInCache
+  }  // addInCache
 
   /**
    * @brief Take a bucket manager (in attribute) as well as a set of variables
@@ -215,13 +215,12 @@ public:
 
     m_cacheCleaningManager->updateCountCachedBucket(cacheBucket,
                                                     varConnected.size());
-    if (!cacheBucket)
-      return TmpEntry<T>(*formulaBucket, hashValue, false);
+    if (!cacheBucket) return TmpEntry<T>(*formulaBucket, hashValue, false);
 
     m_bucketManager->releaseMemory(formulaBucket->data,
                                    formulaBucket->szData());
     return TmpEntry<T>(*cacheBucket, hashValue, true);
-  } // searchInCache
+  }  // searchInCache
 
   /**
    * @brief Release the memory allocated to store a bucket.
@@ -230,7 +229,7 @@ public:
    */
   void releaseMemory(CachedBucket<T> &formulaBucket) {
     m_bucketManager->releaseMemory(formulaBucket.data, formulaBucket.szData());
-  } // releaseMemory
+  }  // releaseMemory
 
   /**
    * @brief Set the information concerning the number of clauses, variables and
@@ -242,6 +241,6 @@ public:
   void setInfoFormula(unsigned mVar) {
     minAffectedHitCache = mVar;
     m_nbInitVar = mVar;
-  } // setInfoFormula
+  }  // setInfoFormula
 };
-} // namespace d4
+}  // namespace d4

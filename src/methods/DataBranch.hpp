@@ -1,20 +1,20 @@
 /*
-* d4
-* Copyright (C) 2020  Univ. Artois & CNRS
-* 
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-* 
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-* 
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * d4
+ * Copyright (C) 2020  Univ. Artois & CNRS
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #pragma once
 
 #include <iostream>
@@ -22,15 +22,14 @@
 
 #include "src/problem/ProblemManager.hpp"
 
-namespace d4
-{
-template <class T> class DataBranch
-{
+namespace d4 {
+template <class T>
+class DataBranch {
  public:
   T d;
   std::vector<Lit> unitLits;
-  std::vector<Var> freeVars;  
+  std::vector<Var> freeVars;
 
-  inline unsigned sumFreeUnit(){return unitLits.size() + freeVars.size();}
+  inline unsigned sumFreeUnit() { return unitLits.size() + freeVars.size(); }
 };
-}
+}  // namespace d4

@@ -3,33 +3,32 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "MethodManager.hpp"
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/gmp.hpp>
 
+#include "DpllStyleMethod.hpp"
+#include "MaxSharpSAT.hpp"
+#include "MinSharpSAT.hpp"
+#include "OperationManager.hpp"
+#include "ProjMCMethod.hpp"
 #include "src/exceptions/BadBehaviourException.hpp"
 #include "src/exceptions/FactoryException.hpp"
 #include "src/problem/ProblemManager.hpp"
-
-#include "DpllStyleMethod.hpp"
-#include "MaxSharpSAT.hpp"
-#include "MethodManager.hpp"
-#include "MinSharpSAT.hpp"
-#include "ProjMCMethod.hpp"
-
-#include "OperationManager.hpp"
 
 namespace d4 {
 namespace mpz = boost::multiprecision;
@@ -59,7 +58,7 @@ MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
   delete initProblem;
 
   return ret;
-} // makeMethodManager
+}  // makeMethodManager
 
 /**
    Consider the option in order to generate an instance of the wanted method.
@@ -131,7 +130,7 @@ MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
   }
 
   throw(FactoryException("Cannot create a MethodManager", __FILE__, __LINE__));
-} // makeMethodManager
+}  // makeMethodManager
 
 /**
  * @brief Display the projected variables in order.
@@ -144,8 +143,7 @@ void MethodManager::displayInfoVariables(ProblemManager *problem,
   if (selected.size()) {
     out << "c\nc [PROJECTED VARIABLES] list: ";
     std::sort(selected.begin(), selected.end());
-    for (auto v : selected)
-      out << v << " ";
+    for (auto v : selected) out << v << " ";
     out << "\nc\n";
   }
 
@@ -153,8 +151,7 @@ void MethodManager::displayInfoVariables(ProblemManager *problem,
   if (maxVar.size()) {
     out << "c\nc [MAX VARIABLES] list: ";
     std::sort(maxVar.begin(), maxVar.end());
-    for (auto v : maxVar)
-      out << v << " ";
+    for (auto v : maxVar) out << v << " ";
     out << "\nc\n";
   }
 
@@ -162,11 +159,10 @@ void MethodManager::displayInfoVariables(ProblemManager *problem,
   if (indVar.size()) {
     out << "c\nc [IND VARIABLES] list: ";
     std::sort(indVar.begin(), indVar.end());
-    for (auto v : indVar)
-      out << v << " ";
+    for (auto v : indVar) out << v << " ";
     out << "\nc\n";
   }
-} // displayInfoProjected
+}  // displayInfoProjected
 
 /**
  * @brief Run the preproc method before constructing the method.
@@ -189,9 +185,9 @@ ProblemManager *MethodManager::runPreproc(po::variables_map &vm,
   problem->displayStat(out, "c [PREPROCESSED INPUT] ");
   out << "c\n";
   assert(problem);
-  delete preproc; // the preproc won't be used.
+  delete preproc;  // the preproc won't be used.
 
   return problem;
-} // runPreproc
+}  // runPreproc
 
-} // namespace d4
+}  // namespace d4

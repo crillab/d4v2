@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -32,16 +32,16 @@
 namespace d4 {
 namespace po = boost::program_options;
 
-template <class T> class ProjMCMethod : public MethodManager {
-private:
+template <class T>
+class ProjMCMethod : public MethodManager {
+ private:
   struct CoupleNotProjClauseSelector {
     std::vector<Lit> clause;
     Lit selector;
 
     void display() {
       std::cout << selector << " : ";
-      for (const auto &l : clause)
-        std::cout << l << " ";
+      for (const auto &l : clause) std::cout << l << " ";
       std::cout << "\n";
     }
   };
@@ -77,7 +77,7 @@ private:
 
   bool m_refinement;
 
-public:
+ public:
   /**
      Constructor.
 
@@ -97,8 +97,7 @@ public:
     // mark the projected variables.
     m_isProjectedVar.resize(m_problem->getNbVar() + 1, false);
     m_isSelector.resize(m_problem->getNbVar() + 1, false);
-    for (auto v : m_problem->getSelectedVar())
-      m_isProjectedVar[v] = true;
+    for (auto v : m_problem->getSelectedVar()) m_isProjectedVar[v] = true;
 
     m_refinement = vm["projMC-refinement"].as<bool>();
     m_out << "c [CONSTRUCTOR] ProjMCMethod: refinement(" << m_refinement
@@ -114,8 +113,7 @@ public:
 
     // prepare the SAT solver.
     std::vector<std::vector<Lit>> satSolverClauses = projClause;
-    for (auto &cl : nprojClause)
-      satSolverClauses.push_back(cl);
+    for (auto &cl : nprojClause) satSolverClauses.push_back(cl);
     initSatSolver(vm, m_problem, satSolverClauses, idxVar - 1);
 
     // prepare the cache.
@@ -131,7 +129,7 @@ public:
     initCounter(vm, m_problem, isFloat, projClause, idxVar - 1);
     m_marked.resize(idxVar + 1, -1);
     m_flag.resize((idxVar + 1) << 1, false);
-  } // constructor
+  }  // constructor
 
   /**
      Destructor.
@@ -142,9 +140,9 @@ public:
     delete m_specs;
     delete m_cache;
     delete m_problem;
-  } // destructor
+  }  // destructor
 
-private:
+ private:
   /**
      Init the counter with the projected clauses.
 
@@ -192,7 +190,7 @@ private:
           << "\n";
     m_counter = Counter<T>::makeCounter(vm, p, "counting", isFloat, precision,
                                         m_outCounter, m_lastBreath);
-  } // initCounter
+  }  // initCounter
 
   /**
      Init the SAT solver with a set of clauses (actually two sets).  Only deals
@@ -232,7 +230,7 @@ private:
 
     // prepare the spec manager.
     m_specs = SpecManager::makeSpecManager(vm, p, m_out);
-  } // initSatSolver
+  }  // initSatSolver
 
   /**
      Partition the formula in tree sets regarding the the clauses contain or not
@@ -262,8 +260,7 @@ private:
           nbp++;
         else
           nbn++;
-        if (nbp && nbn)
-          break;
+        if (nbp && nbn) break;
       }
 
       if (nbp && !nbn)
@@ -273,7 +270,7 @@ private:
       else
         mix.push_back(cl);
     }
-  } // partitionFormula
+  }  // partitionFormula
 
   /**
      Manage the mixed clauses by adding a selector in order to seperate each
@@ -337,7 +334,7 @@ private:
       clnp.push_back(~s);
       nprojClause.push_back(clnp);
     }
-  } // manageMixedClauses
+  }  // manageMixedClauses
 
   /**
      Extract the selector that correspond to the non projected clauses that are
@@ -350,10 +347,8 @@ private:
                                      std::vector<lbool> &model,
                                      std::vector<Lit> &selector) {
     for (auto &v : setOfVar) {
-      if (!m_isSelector[v])
-        continue;
-      if (m_solver->isInAssumption(v))
-        continue;
+      if (!m_isSelector[v]) continue;
+      if (m_solver->isInAssumption(v)) continue;
 
       bool allSAT = true;
       for (auto idx : m_selectorToNProjClause[v]) {
@@ -367,17 +362,15 @@ private:
           else
             isSAT = model[l.var()] == l_True;
 
-          if (isSAT)
-            break;
+          if (isSAT) break;
         }
 
-        if (!(allSAT = isSAT))
-          break;
+        if (!(allSAT = isSAT)) break;
       }
 
       selector.push_back(Lit::makeLit(v, !allSAT));
     }
-  } // extractSelectorFalsifiedNProj
+  }  // extractSelectorFalsifiedNProj
 
   /**
      Expel from a list of variables, and a list of literals, the elements that
@@ -391,16 +384,14 @@ private:
     // only keep the projected.
     unsigned j = 0;
     for (unsigned i = 0; i < litList.size(); i++)
-      if (m_isProjectedVar[litList[i].var()])
-        litList[j++] = litList[i];
+      if (m_isProjectedVar[litList[i].var()]) litList[j++] = litList[i];
     litList.resize(j);
 
     j = 0;
     for (unsigned i = 0; i < varList.size(); i++)
-      if (m_isProjectedVar[varList[i]])
-        varList[j++] = varList[i];
+      if (m_isProjectedVar[varList[i]]) varList[j++] = varList[i];
     varList.resize(j);
-  } // expelNoProjectedElement
+  }  // expelNoProjectedElement
 
   /**
      Try to reduce the number of falsified selector.
@@ -453,12 +444,10 @@ private:
               else
                 isSAT = model[kl.var()] == l_True;
 
-              if (isSAT)
-                break;
+              if (isSAT) break;
             }
 
-            if (!(allSAT = isSAT))
-              break;
+            if (!(allSAT = isSAT)) break;
           }
 
           if (allSAT) {
@@ -478,7 +467,7 @@ private:
     }
 
     m_solver->popAssumption(m_solver->sizeAssumption() - initSizeAssumption);
-  } // refine
+  }  // refine
 
   /**
      Compute the number of model on the projected variables.
@@ -494,8 +483,7 @@ private:
     // if(m_nbCallRec > 100000) exit(0);
 
     unsigned initSizeAssumption = m_solver->sizeAssumption();
-    if (!m_solver->solve(setOfVar))
-      return T(0);
+    if (!m_solver->solve(setOfVar)) return T(0);
 
     // collect unit literals
     std::vector<Lit> unitLits;
@@ -505,8 +493,7 @@ private:
     // add the unit in the assumption.
     for (auto &l : unitLits) {
       assert(!m_solver->isInAssumption(~l));
-      if (!m_solver->isInAssumption(l))
-        m_solver->pushAssumption(l);
+      if (!m_solver->isInAssumption(l)) m_solver->pushAssumption(l);
     }
 
     std::vector<Var> reallyPresent, freeVariable;
@@ -517,29 +504,25 @@ private:
     // extract the really present variables.
     reallyPresent.reserve(setOfVar.size() - freeVariable.size());
     for (auto &l : varConnected)
-      for (auto &v : l)
-        reallyPresent.push_back(v);
+      for (auto &v : l) reallyPresent.push_back(v);
 
     // extract the projected variables.
     std::vector<Var> projectSetOfVar;
     for (auto &v : reallyPresent)
-      if (m_isProjectedVar[v])
-        projectSetOfVar.push_back(v);
+      if (m_isProjectedVar[v]) projectSetOfVar.push_back(v);
 
     T ret = 1;
     if (projectSetOfVar.size()) {
       if (nbComponent > 1) {
         // consider each component independently
-        for (auto &component : varConnected)
-          ret *= compute_(component, out);
+        for (auto &component : varConnected) ret *= compute_(component, out);
         m_nbSplit += nbComponent;
       } else if (nbComponent == 1) {
         // collect the selectors of the unsatisfied non projected clauses.
         std::vector<Lit> selector;
         extractSelectorFalsifiedNProj(reallyPresent, m_solver->getModel(),
                                       selector);
-        if (m_refinement)
-          refine(reallyPresent, selector);
+        if (m_refinement) refine(reallyPresent, selector);
 
         TmpEntry<T> cb = m_cache->searchInCache(reallyPresent);
         if (cb.defined)
@@ -549,16 +532,14 @@ private:
           std::vector<Lit> nextAssums(m_solver->getAssumption());
           for (auto &s : selector) {
             assert(!m_solver->isInAssumption(s.var()));
-            if (!m_solver->isInAssumption(s))
-              nextAssums.push_back(s);
+            if (!m_solver->isInAssumption(s)) nextAssums.push_back(s);
           }
           ret = m_counter->count(reallyPresent, nextAssums, m_outCounter);
 
           // reajust the selectors by only keeping the negative.
           unsigned j = 0;
           for (unsigned i = 0; i < selector.size(); i++)
-            if (selector[i].sign())
-              selector[j++] = selector[i];
+            if (selector[i].sign()) selector[j++] = selector[i];
           selector.resize(j);
 
           for (auto &s : selector) {
@@ -576,13 +557,10 @@ private:
               }
             }
 
-            if (!isUnsat)
-              ret += compute_(reallyPresent, out);
+            if (!isUnsat) ret += compute_(reallyPresent, out);
             m_solver->popAssumption(countPushInAssumption);
-            if (m_solver->isInAssumption(~s))
-              break; // UNSAT.
-            if (!m_solver->isInAssumption(s))
-              m_solver->pushAssumption(s);
+            if (m_solver->isInAssumption(~s)) break;  // UNSAT.
+            if (!m_solver->isInAssumption(s)) m_solver->pushAssumption(s);
           }
 
           m_solver->popAssumption(selector.size());
@@ -596,7 +574,7 @@ private:
 
     m_solver->popAssumption(m_solver->sizeAssumption() - initSizeAssumption);
     return ret * m_problem->computeWeightUnitFree<T>(unitLits, freeVariable);
-  } // compute_
+  }  // compute_
 
   /**
      Prepare the computed process.
@@ -605,10 +583,9 @@ private:
    */
   T compute(std::ostream &out) {
     std::vector<Var> setOfVar;
-    for (int i = 1; i <= m_specs->getNbVariable(); i++)
-      setOfVar.push_back(i);
+    for (int i = 1; i <= m_specs->getNbVariable(); i++) setOfVar.push_back(i);
     return compute_(setOfVar, out);
-  } // compute
+  }  // compute
 
   /**
    Print out information about the solving process.
@@ -625,7 +602,7 @@ private:
         << m_cache->usedMemory() << "|" << std::setw(c_WIDTH_PRINT_COLUMN)
         << m_nbSplit << "|" << std::setw(c_WIDTH_PRINT_COLUMN)
         << MemoryStat::memUsedPeak() << "|\n";
-  } // showInter
+  }  // showInter
 
   /**
      Print out a line of dashes.
@@ -634,10 +611,9 @@ private:
    */
   inline void separator(std::ostream &out) {
     out << "c [PROJMC] ";
-    for (unsigned i = 0; i < c_NB_SEP; i++)
-      out << "-";
+    for (unsigned i = 0; i < c_NB_SEP; i++) out << "-";
     out << "\n";
-  } // separator
+  }  // separator
 
   /**
      Print out the header information.
@@ -656,7 +632,7 @@ private:
         << "|" << std::setw(c_WIDTH_PRINT_COLUMN) << "mem(MB)"
         << "|\n";
     separator(out);
-  } // showHeader
+  }  // showHeader
 
   /**
      Print out information when it is requiered.
@@ -664,11 +640,9 @@ private:
      @param[in] out, the stream we use to print out information.
    */
   inline void showRun(std::ostream &out) {
-    if (!(m_nbCallRec & (c_MASK_HEADER)))
-      showHeader(out);
-    if (m_nbCallRec && !(m_nbCallRec & c_MASK_SHOWRUN))
-      showInter(out);
-  } // showRun
+    if (!(m_nbCallRec & (c_MASK_HEADER))) showHeader(out);
+    if (m_nbCallRec && !(m_nbCallRec & c_MASK_SHOWRUN)) showInter(out);
+  }  // showRun
 
   /**
      Print out the final stat.
@@ -689,9 +663,9 @@ private:
     m_cache->printCacheInformation(out);
     out << "c [PROJMC] Final time: " << getTimer() << "\n";
     out << "c\n";
-  } // printFinalStat
+  }  // printFinalStat
 
-public:
+ public:
   /**
      Run the DPLL style algorithm with the operation manager.
 
@@ -701,6 +675,6 @@ public:
     T res = compute(m_out);
     printFinalStats(m_out);
     std::cout << "s " << res << "\n";
-  } // run
+  }  // run
 };
-} // namespace d4
+}  // namespace d4

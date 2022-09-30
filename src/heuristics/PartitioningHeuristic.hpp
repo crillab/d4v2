@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -30,7 +30,7 @@
 namespace d4 {
 namespace po = boost::program_options;
 class PartitioningHeuristic {
-protected:
+ protected:
   unsigned m_nbVar;
 
   void computeEquivClass(EquivExtractor &eqManager, WrapperSolver &solver,
@@ -39,15 +39,15 @@ protected:
                          std::vector<Var> &equivClass,
                          std::vector<std::vector<Var>> &equivVar);
 
-public:
+ public:
   virtual ~PartitioningHeuristic() {}
   static PartitioningHeuristic *makePartitioningHeuristic(po::variables_map &vm,
                                                           SpecManager &sm,
                                                           WrapperSolver &ws,
                                                           std::ostream &out);
 
-  static PartitioningHeuristic *
-  makePartitioningHeuristicNone(std::ostream &out);
+  static PartitioningHeuristic *makePartitioningHeuristicNone(
+      std::ostream &out);
 
   /**
      Compute a cutset regarding the subformula built on the set of given
@@ -72,4 +72,4 @@ public:
    */
   virtual void displayStat(std::ostream &out) {}
 };
-} // namespace d4
+}  // namespace d4

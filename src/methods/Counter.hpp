@@ -3,33 +3,35 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #pragma once
-#include "src/problem/ProblemTypes.hpp"
+#include <boost/multiprecision/gmp.hpp>
 #include <vector>
-#include "src/exceptions/BadBehaviourException.hpp"
 
 #include "DpllStyleMethod.hpp"
 #include "nnf/Node.hpp"
-#include <boost/multiprecision/gmp.hpp>
+#include "src/exceptions/BadBehaviourException.hpp"
+#include "src/problem/ProblemTypes.hpp"
 
 namespace d4 {
-template <class T, class U> class DpllStyleMethod;
+template <class T, class U>
+class DpllStyleMethod;
 
-template <class T> class Counter {
-public:
+template <class T>
+class Counter {
+ public:
   /**
      As for the method manager, but we return a counter (actually we also verify
      the it is a counter that is requiered).
@@ -48,7 +50,7 @@ public:
                                  LastBreathPreproc &lastBreath) {
     out << "c [CONSTRUCTOR] MethodManager: " << meth << "\n";
     boost::multiprecision::mpf_float::default_precision(
-        precision); // we set the precision
+        precision);  // we set the precision
 
     if (meth == "counting")
       return new DpllStyleMethod<T, T>(vm, meth, isFloat, problem, out,
@@ -59,7 +61,7 @@ public:
 
     throw(BadBehaviourException(
         "Cannot create a counter with the given options.", __FILE__, __LINE__));
-  } // makeCounter
+  }  // makeCounter
 
   virtual ~Counter() {}
 
@@ -80,4 +82,4 @@ public:
     return count(setOfVar, assum, out);
   }
 };
-} // namespace d4
+}  // namespace d4

@@ -3,22 +3,24 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "PartitioningHeuristicStaticSingleDual.hpp"
-#include "src/hyperGraph/HyperGraphExtractorDual.hpp"
+
 #include <ostream>
+
+#include "src/hyperGraph/HyperGraphExtractorDual.hpp"
 
 namespace d4 {
 
@@ -36,7 +38,7 @@ PartitioningHeuristicStaticSingleDual::PartitioningHeuristicStaticSingleDual(
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
-} // constructor
+}  // constructor
 
 /**
    Constructor.
@@ -61,13 +63,13 @@ PartitioningHeuristicStaticSingleDual::PartitioningHeuristicStaticSingleDual(
   m_hypergraphExtractor = new HyperGraphExtractorDual(m_nbVar, m_nbClause);
   m_maxNbNodes = m_nbClause + 1;
   m_maxNbEdges = m_nbVar + 1;
-} // constructor
+}  // constructor
 
 /**
    Destructor.
  */
 PartitioningHeuristicStaticSingleDual::
-    ~PartitioningHeuristicStaticSingleDual() {} // destructor
+    ~PartitioningHeuristicStaticSingleDual() {}  // destructor
 
 /**
    Set the elements given by indices in the bucketNumber structure.
@@ -80,8 +82,7 @@ PartitioningHeuristicStaticSingleDual::
 void PartitioningHeuristicStaticSingleDual::setBucketLevelFromEdges(
     std::vector<std::vector<unsigned>> &hypergraph,
     std::vector<unsigned> &indices, std::vector<int> &mapping, unsigned level) {
-  for (auto &id : indices)
-    m_bucketNumber[mapping[id]] = level;
-} // setBucketLevelFromEdges
+  for (auto &id : indices) m_bucketNumber[mapping[id]] = level;
+}  // setBucketLevelFromEdges
 
-} // namespace d4
+}  // namespace d4

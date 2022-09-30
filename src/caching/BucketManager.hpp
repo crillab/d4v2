@@ -3,32 +3,27 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 
+#include <string.h>
+
+#include <boost/program_options.hpp>
 #include <cassert>
 #include <deque>
 #include <iostream>
-#include <string.h>
 #include <vector>
-
-#include <boost/program_options.hpp>
-
-#include "src/caching/CacheManager.hpp"
-#include "src/exceptions/FactoryException.hpp"
-#include "src/problem/ProblemTypes.hpp"
-#include "src/specs/SpecManager.hpp"
 
 #include "BucketAllocator.hpp"
 #include "CachedBucket.hpp"
@@ -37,22 +32,26 @@
 #include "cnf/BucketManagerCnfCombi.hpp"
 #include "cnf/BucketManagerCnfIndex.hpp"
 #include "cnf/BucketManagerCnfSym.hpp"
+#include "src/caching/CacheManager.hpp"
+#include "src/exceptions/FactoryException.hpp"
+#include "src/problem/ProblemTypes.hpp"
+#include "src/specs/SpecManager.hpp"
 #include "src/utils/Enum.hpp"
 
 namespace d4 {
 namespace po = boost::program_options;
 
-template <class T> class BucketManager {
-protected:
+template <class T>
+class BucketManager {
+ protected:
   BucketAllocator *m_bucketAllocator;
   CachedBucket<T> m_bucket;
-  CacheManager<T> *m_cache; // the cache linked with this BucketManager.
+  CacheManager<T> *m_cache;  // the cache linked with this BucketManager.
 
-public:
+ public:
   virtual ~BucketManager() {
-    if (m_bucketAllocator->getCleanup())
-      delete m_bucketAllocator;
-  } // destructor
+    if (m_bucketAllocator->getCleanup()) delete m_bucketAllocator;
+  }  // destructor
 
   static BucketManager<T> *makeBucketManager(po::variables_map &vm,
                                              CacheManager<T> *cache,
@@ -75,10 +74,8 @@ public:
         << "\n";
 
     ModeStore mode = ALL;
-    if (css == "not-binary")
-      mode = NB;
-    if (css == "not-touched")
-      mode = NT;
+    if (css == "not-binary") mode = NB;
+    if (css == "not-touched") mode = NT;
 
     SpecManagerCnf &scnf = dynamic_cast<SpecManagerCnf &>(s);
     if (ccr == "clause")
@@ -108,16 +105,14 @@ public:
 
     throw(
         FactoryException("Cannot create a BucketManager", __FILE__, __LINE__));
-  } // makeBucketManager
+  }  // makeBucketManager
 
   inline int nbOctetToEncodeInt(unsigned int v) {
     // we know that we cannot have more than 1<<32 variables
-    if (v < (1 << 8))
-      return 1;
-    if (v < (1 << 16))
-      return 2;
+    if (v < (1 << 8)) return 1;
+    if (v < (1 << 16)) return 2;
     return 4;
-  } // nbOctetToEncodeInt
+  }  // nbOctetToEncodeInt
 
   /**
      Collect the bucket associtated to the set of variable given in
@@ -128,7 +123,7 @@ public:
   CachedBucket<T> *collectBucket(std::vector<Var> &component) {
     storeFormula(component, m_bucket);
     return &m_bucket;
-  } // collectBuckect
+  }  // collectBuckect
 
   inline unsigned long int usedMemory() {
     return m_bucketAllocator->usedMemory();
@@ -143,13 +138,13 @@ public:
 
   inline void releaseMemory(char *m, unsigned size) {
     m_bucketAllocator->releaseMemory(m, size);
-  } // releaseMemory
+  }  // releaseMemory
 
   inline double remainingMemory() {
     return m_bucketAllocator->remainingMemory();
-  } // remainingMemory
+  }  // remainingMemory
 
   virtual void storeFormula(std::vector<Var> &component,
                             CachedBucket<T> &b) = 0;
 };
-} // namespace d4
+}  // namespace d4

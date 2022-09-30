@@ -3,23 +3,24 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
 
+#include <ostream>
+
 #include "PartitioningHeuristicStatic.hpp"
 #include "PhaseSelectorManager.hpp"
-#include <ostream>
 
 namespace d4 {
 class PhaseSelectorManager;
@@ -38,8 +39,7 @@ struct DistribSize {
   }
 
   double getRatio() {
-    if (!leftTreeSize || !rightTreeSize)
-      return 0;
+    if (!leftTreeSize || !rightTreeSize) return 0;
 
     if (leftTreeSize > rightTreeSize)
       return (double)rightTreeSize / (double)leftTreeSize;
@@ -48,7 +48,7 @@ struct DistribSize {
 };
 
 class PartitioningHeuristicStaticSingle : public PartitioningHeuristicStatic {
-protected:
+ protected:
   struct Strata {
     unsigned fatherId;
     std::vector<unsigned> part;
@@ -93,20 +93,19 @@ protected:
   void setHyperGraph(std::vector<std::vector<unsigned>> &savedHyperGraph,
                      std::vector<unsigned> &indices, HyperGraph &hypergraph);
 
-  virtual void
-  setBucketLevelFromEdges(std::vector<std::vector<unsigned>> &hypergraph,
-                          std::vector<unsigned> &indices,
-                          std::vector<int> &mapping, unsigned level) {}
+  virtual void setBucketLevelFromEdges(
+      std::vector<std::vector<unsigned>> &hypergraph,
+      std::vector<unsigned> &indices, std::vector<int> &mapping,
+      unsigned level) {}
 
-  virtual void
-  setCutSetBucketLevelFromEdges(std::vector<std::vector<unsigned>> &hypergraph,
-                                std::vector<int> &partition,
-                                std::vector<unsigned> &indices,
-                                std::vector<int> &mapping, unsigned level) {
+  virtual void setCutSetBucketLevelFromEdges(
+      std::vector<std::vector<unsigned>> &hypergraph,
+      std::vector<int> &partition, std::vector<unsigned> &indices,
+      std::vector<int> &mapping, unsigned level) {
     setBucketLevelFromEdges(hypergraph, indices, mapping, level);
   }
 
-public:
+ public:
   PartitioningHeuristicStaticSingle(po::variables_map &vm, WrapperSolver &s,
                                     SpecManager &om, std::ostream &out);
 
@@ -139,4 +138,4 @@ public:
     return m_levelInfo[i].cutSize;
   }
 };
-} // namespace d4
+}  // namespace d4

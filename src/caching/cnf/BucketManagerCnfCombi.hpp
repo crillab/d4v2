@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -21,22 +21,25 @@
 
 #include "BucketInConstruction.hpp"
 #include "BucketManagerCnf.hpp"
+#include "BucketManagerCnfCl.hpp"
+#include "BucketManagerCnfIndex.hpp"
+#include "BucketManagerCnfSym.hpp"
 #include "BucketSortInfo.hpp"
 #include "src/caching/BucketManager.hpp"
 #include "src/exceptions/BucketException.hpp"
 #include "src/problem/ProblemTypes.hpp"
 
-#include "BucketManagerCnfCl.hpp"
-#include "BucketManagerCnfIndex.hpp"
-#include "BucketManagerCnfSym.hpp"
-
 namespace d4 {
-template <class T> class BucketManagerCnfSym;
-template <class T> class BucketManagerCnfCl;
-template <class T> class BucketManagerCnfIndex;
+template <class T>
+class BucketManagerCnfSym;
+template <class T>
+class BucketManagerCnfCl;
+template <class T>
+class BucketManagerCnfIndex;
 
-template <class T> class BucketManagerCnfCombi : public BucketManagerCnf<T> {
-private:
+template <class T>
+class BucketManagerCnfCombi : public BucketManagerCnf<T> {
+ private:
   std::vector<BucketSortInfo> m_vecBucketSortInfo;
   int m_unusedBucket;
   std::vector<unsigned long int> m_mapVar;
@@ -56,7 +59,7 @@ private:
   unsigned m_limitNbVarSym;
   unsigned m_limitNbVarIndex;
 
-public:
+ public:
   /**
      Function called in order to initialized variables before using
 
@@ -101,7 +104,7 @@ public:
     m_limitNbVarIndex = limitNbVarIndex;
     m_limitNbVarSym = limitNbVarSym;
     this->m_bucketAllocator->deactiveCleanUp();
-  } // BucketManagerCnfCombi
+  }  // BucketManagerCnfCombi
 
   /**
      Destructor.
@@ -112,7 +115,7 @@ public:
     delete clBucketManagerBis;
     delete clBucketManager;
     this->m_bucketAllocator->activeCleanUp();
-  } // destructor
+  }  // destructor
 
   /**
      Transfer the formula store in distib in a table given in parameter.
@@ -127,6 +130,6 @@ public:
     if (component.size() > m_limitNbVarIndex)
       return indexBucketManager->storeFormula(component, b);
     return clBucketManager->storeFormula(component, b);
-  } // storeFormula
+  }  // storeFormula
 };
-} // namespace d4
+}  // namespace d4

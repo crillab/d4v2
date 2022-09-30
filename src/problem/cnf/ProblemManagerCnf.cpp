@@ -3,20 +3,21 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "ProblemManagerCnf.hpp"
+
 #include "ParserDimacs.hpp"
 #include "src/problem/ProblemManager.hpp"
 
@@ -33,13 +34,13 @@ ProblemManagerCnf::ProblemManagerCnf(std::string &nameFile) {
   m_weightVar.resize(m_nbVar + 1, 0);
   for (unsigned i = 0; i <= m_nbVar; i++)
     m_weightVar[i] = m_weightLit[i << 1] + m_weightLit[(i << 1) + 1];
-} // constructor
+}  // constructor
 
 /**
    Constructor.
    Construct an empty formula.
  */
-ProblemManagerCnf::ProblemManagerCnf() { m_nbVar = 0; } // constructor
+ProblemManagerCnf::ProblemManagerCnf() { m_nbVar = 0; }  // constructor
 
 /**
  * @brief Construct a new Problem Manager Cnf:: Problem Manager Cnf object
@@ -54,7 +55,7 @@ ProblemManagerCnf::ProblemManagerCnf(ProblemManager *problem) {
   m_maxVar = problem->getMaxVar();
   m_indVar = problem->getIndVar();
   m_isUnsat = false;
-} // constructor
+}  // constructor
 
 /**
  * @brief Construct a new Problem Manager Cnf:: Problem Manager Cnf object
@@ -73,7 +74,7 @@ ProblemManagerCnf::ProblemManagerCnf(int nbVar, std::vector<double> &weightLit,
   m_weightVar = weightVar;
   m_selected = selected;
   m_isUnsat = false;
-} // constructor
+}  // constructor
 
 /**
    Destructor.
@@ -81,7 +82,7 @@ ProblemManagerCnf::ProblemManagerCnf(int nbVar, std::vector<double> &weightLit,
 ProblemManagerCnf::~ProblemManagerCnf() {
   m_clauses.clear();
   m_nbVar = 0;
-} // destructor
+}  // destructor
 
 /**
  * @brief Get the Unsat ProblemManager object.
@@ -102,7 +103,7 @@ ProblemManager *ProblemManagerCnf::getUnsatProblem() {
   ret->getClauses().push_back(cl);
 
   return ret;
-} // getUnsatProblem
+}  // getUnsatProblem
 
 /**
  * @brief Simplify the formula by unit propagation and return the resulting CNF
@@ -111,8 +112,8 @@ ProblemManager *ProblemManagerCnf::getUnsatProblem() {
  * @param units is the set of unit literals we want to condition with.
  * @return the simplified formula.
  */
-ProblemManager *
-ProblemManagerCnf::getConditionedFormula(std::vector<Lit> &units) {
+ProblemManager *ProblemManagerCnf::getConditionedFormula(
+    std::vector<Lit> &units) {
   ProblemManagerCnf *ret = new ProblemManagerCnf(this);
 
   std::vector<char> value(m_nbVar + 1, 0);
@@ -126,21 +127,18 @@ ProblemManagerCnf::getConditionedFormula(std::vector<Lit> &units) {
     std::vector<Lit> scl;
     bool isSAT = false;
     for (auto l : cl) {
-      if (!value[l.var()])
-        scl.push_back(l);
+      if (!value[l.var()]) scl.push_back(l);
 
       isSAT = l.sign() + 1 == value[l.var()];
-      if (isSAT)
-        break;
+      if (isSAT) break;
     }
 
     // add the simplified clause if needed.
-    if (!isSAT)
-      ret->getClauses().push_back(cl);
+    if (!isSAT) ret->getClauses().push_back(cl);
   }
 
   return ret;
-} // getConditionedFormula
+}  // getConditionedFormula
 
 /**
    Display the problem.
@@ -159,11 +157,10 @@ void ProblemManagerCnf::display(std::ostream &out) {
 
   out << "p cnf " << m_nbVar << " " << m_clauses.size() << "\n";
   for (auto cl : m_clauses) {
-    for (auto &l : cl)
-      out << l << " ";
+    for (auto &l : cl) out << l << " ";
     out << "0\n";
   }
-} // diplay
+}  // diplay
 
 /**
    Print out some statistic about the problem. Each line will start with the
@@ -180,12 +177,9 @@ void ProblemManagerCnf::displayStat(std::ostream &out, std::string startLine) {
 
   for (auto &c : m_clauses) {
     nbLits += c.size();
-    if (c.size() == 2)
-      nbBin++;
-    if (c.size() == 3)
-      nbTer++;
-    if (c.size() > 3)
-      nbMoreThree++;
+    if (c.size() == 2) nbBin++;
+    if (c.size() == 3) nbTer++;
+    if (c.size() > 3) nbMoreThree++;
   }
 
   out << startLine << "Number of variables: " << m_nbVar << "\n";
@@ -195,6 +189,6 @@ void ProblemManagerCnf::displayStat(std::ostream &out, std::string startLine) {
   out << startLine << "Number of clauses larger than 3: " << nbMoreThree
       << "\n";
   out << startLine << "Number of literals: " << nbLits << "\n";
-} // displaystat
+}  // displaystat
 
-} // namespace d4
+}  // namespace d4

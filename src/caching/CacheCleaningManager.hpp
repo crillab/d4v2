@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -26,14 +26,16 @@
 #include "src/exceptions/FactoryException.hpp"
 
 namespace d4 {
-template <class T> class CacheList;
+template <class T>
+class CacheList;
 namespace po = boost::program_options;
 
-template <class T> class CacheCleaningManager {
-protected:
+template <class T>
+class CacheCleaningManager {
+ protected:
   CacheManager<T> *m_cache;
 
-public:
+ public:
   virtual ~CacheCleaningManager() {}
 
   /**
@@ -44,9 +46,9 @@ public:
      @param[in] nbVar, the number of variables in the problem.
      @param[in] out, the stream where are print out the information.
    */
-  static CacheCleaningManager<T> *
-  makeCacheCleaningManager(po::variables_map &vm, CacheManager<T> *cache,
-                           int nbVar, std::ostream &out) {
+  static CacheCleaningManager<T> *makeCacheCleaningManager(
+      po::variables_map &vm, CacheManager<T> *cache, int nbVar,
+      std::ostream &out) {
     std::string crs = vm["cache-reduction-strategy"].as<std::string>();
 
     if (crs == "expectation") {
@@ -59,7 +61,7 @@ public:
 
     throw(FactoryException("Cannot create a CacheCleaningManager", __FILE__,
                            __LINE__));
-  } // makeCacheCleaningManager
+  }  // makeCacheCleaningManager
 
   virtual void initCountCachedBucket(CachedBucket<T> *cb) = 0;
   virtual void updateCountCachedBucket(CachedBucket<T> *cb, int nbVar) = 0;
@@ -77,7 +79,7 @@ public:
    */
   void releaseMemory(char *data, int size) {
     m_cache->getBucketManager()->releaseMemory(data, size);
-  } // releaseMemory
+  }  // releaseMemory
 };
 
-} // namespace d4
+}  // namespace d4

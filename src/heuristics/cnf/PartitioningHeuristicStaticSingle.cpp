@@ -3,22 +3,23 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "PartitioningHeuristicStaticSingle.hpp"
 
-#include "src/utils/AtMost1Extractor.hpp"
 #include <ostream>
+
+#include "src/utils/AtMost1Extractor.hpp"
 
 namespace d4 {
 /**
@@ -35,7 +36,7 @@ PartitioningHeuristicStaticSingle::PartitioningHeuristicStaticSingle(
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
-} // constructor
+}  // constructor
 
 /**
    Constructor.
@@ -58,17 +59,15 @@ PartitioningHeuristicStaticSingle::PartitioningHeuristicStaticSingle(
   m_equivClass.resize(m_nbVar + 1, 0);
   m_levelDistribution.resize(m_nbVar + 1, 0);
   m_markedVar.resize(m_nbVar + 1, 0);
-} // constructor
+}  // constructor
 
 /**
    Destructor.
  */
 PartitioningHeuristicStaticSingle::~PartitioningHeuristicStaticSingle() {
-  if (m_hypergraphExtractor)
-    delete m_hypergraphExtractor;
-  if (m_phaseSelector)
-    delete m_phaseSelector;
-} // destructor
+  if (m_hypergraphExtractor) delete m_hypergraphExtractor;
+  if (m_phaseSelector) delete m_phaseSelector;
+}  // destructor
 
 /**
    Initialize the bucket level.
@@ -78,8 +77,7 @@ void PartitioningHeuristicStaticSingle::init(std::ostream &out) {
 
   // the list of all variables.
   std::vector<Var> component;
-  for (unsigned i = 1; i <= m_nbVar; i++)
-    component.push_back(i);
+  for (unsigned i = 1; i <= m_nbVar; i++) component.push_back(i);
 
   // search for equiv class if requiered.
   std::vector<Lit> unitEquiv;
@@ -89,8 +87,7 @@ void PartitioningHeuristicStaticSingle::init(std::ostream &out) {
     PartitioningHeuristic::computeEquivClass(m_em, m_s, component, unitEquiv,
                                              m_equivClass, equivVar);
   else
-    for (auto &v : component)
-      m_equivClass[v] = v;
+    for (auto &v : component) m_equivClass[v] = v;
 
   // synchronize the SAT solver and the spec manager.
   m_om.preUpdate(unitEquiv);
@@ -103,7 +100,7 @@ void PartitioningHeuristicStaticSingle::init(std::ostream &out) {
 
   // restore the initial state.
   m_om.postUpdate(unitEquiv);
-} // init
+}  // init
 
 /**
    Ask if the current decomposition is still correct.
@@ -114,7 +111,7 @@ void PartitioningHeuristicStaticSingle::init(std::ostream &out) {
  */
 bool PartitioningHeuristicStaticSingle::isStillOk(std::vector<Var> &component) {
   return m_phaseSelector->isStillOk(component);
-} // isStillOk
+}  // isStillOk
 
 /**
    Save the current hyper graph.
@@ -126,10 +123,9 @@ void PartitioningHeuristicStaticSingle::saveHyperGraph(
   for (auto edge : m_hypergraph) {
     savedHyperGraph.push_back(std::vector<unsigned>());
     std::vector<unsigned> &tmp = savedHyperGraph.back();
-    for (auto v : edge)
-      tmp.push_back(v);
+    for (auto v : edge) tmp.push_back(v);
   }
-} // savedHyperGraph
+}  // savedHyperGraph
 
 /**
    Set the hyper graph regarding the given set of variables and the saved
@@ -147,16 +143,14 @@ void PartitioningHeuristicStaticSingle::setHyperGraph(
 
   for (auto idxEdge : indices) {
     std::vector<unsigned> &tmp = savedHyperGraph[idxEdge];
-    if (!tmp.size())
-      continue;
+    if (!tmp.size()) continue;
 
     *edges = tmp.size();
-    for (unsigned i = 0; i < tmp.size(); i++)
-      edges[i + 1] = tmp[i];
+    for (unsigned i = 0; i < tmp.size(); i++) edges[i + 1] = tmp[i];
     edges += *edges + 1;
     hypergraph.incSize();
   }
-} // setHyperGraph
+}  // setHyperGraph
 
 /**
    Compute a cutset by computing a bipartition of the hypergraph of the clauses.
@@ -177,12 +171,11 @@ void PartitioningHeuristicStaticSingle::computeCutSet(
       minLevel = m_bucketNumber[v];
     }
 
-    if (m_bucketNumber[v] == minLevel)
-      cutSet.push_back(v);
+    if (m_bucketNumber[v] == minLevel) cutSet.push_back(v);
   }
 
   assert(cutSet.size());
-} // component
+}  // component
 
 /**
    Split and assign variables.
@@ -238,7 +231,7 @@ void PartitioningHeuristicStaticSingle::distributePartition(
     stack.push_back({currentId, indicesFirst});
   else
     assignLevel(hypergraph, currentId, indicesFirst, mappingVar, level);
-} // distributePartition
+}  // distributePartition
 
 /**
    Assign a set of mappingVar[indices] to their level.
@@ -261,7 +254,7 @@ void PartitioningHeuristicStaticSingle::assignLevel(
     level++;
     m_levelInfo.push_back({level, (unsigned)indices.size()});
   }
-} // assignLevel
+}  // assignLevel
 
 /**
    Split the hyper graph into two parts that are induced by the given partition.
@@ -292,7 +285,7 @@ void PartitioningHeuristicStaticSingle::splitWrtPartition(
         indicesSecond.push_back(mappingEdge[edge.getId()]);
     }
   }
-} // splitWrtPartition
+}  // splitWrtPartition
 
 /**
    Search a decomposition tree regarding a component.
@@ -335,8 +328,7 @@ void PartitioningHeuristicStaticSingle::computeDecomposition(
   // reinit the bucket for all.
   m_levelInfo.clear();
   m_levelInfo.push_back({0, 0});
-  for (auto &b : m_bucketNumber)
-    b = 0;
+  for (auto &b : m_bucketNumber) b = 0;
   unsigned level = 1;
 
   // iteratively consider sub-graph.
@@ -354,15 +346,14 @@ void PartitioningHeuristicStaticSingle::computeDecomposition(
 
   // set the equivalence.
   for (auto v : component) {
-    if (m_bucketNumber[v])
-      continue;
+    if (m_bucketNumber[v]) continue;
 
     if (v == equivClass[v])
       m_bucketNumber[v] = level;
     else
       m_bucketNumber[v] = m_bucketNumber[equivClass[v]];
   }
-} // computeDecomposition
+}  // computeDecomposition
 
 /**
    Compute the distribution.
@@ -374,8 +365,7 @@ void PartitioningHeuristicStaticSingle::computeDecomposition(
 DistribSize PartitioningHeuristicStaticSingle::computeDistribSize(
     std::vector<Var> &component) {
   for (auto v : component) {
-    if (m_markedVar[m_equivClass[v]])
-      continue;
+    if (m_markedVar[m_equivClass[v]]) continue;
     m_markedVar[m_equivClass[v]] = true;
     m_levelDistribution[m_bucketNumber[v]]++;
   }
@@ -383,8 +373,7 @@ DistribSize PartitioningHeuristicStaticSingle::computeDistribSize(
   unsigned leftTreeSize = 0, rightTreeSize = 0, cutSize = 0, failedCutSize = 0;
   unsigned level = 0;
   for (; level < m_levelDistribution.size(); level++)
-    if (m_levelDistribution[level])
-      break;
+    if (m_levelDistribution[level]) break;
 
   if (level >= m_levelInfo.size())
     cutSize = component.size();
@@ -399,13 +388,11 @@ DistribSize PartitioningHeuristicStaticSingle::computeDistribSize(
       rightTreeSize += m_levelDistribution[i];
 
     // reinit.
-    for (auto &counter : m_levelDistribution)
-      counter = 0;
-    for (auto &v : component)
-      m_markedVar[m_equivClass[v]] = false;
+    for (auto &counter : m_levelDistribution) counter = 0;
+    for (auto &v : component) m_markedVar[m_equivClass[v]] = false;
   }
 
   return {cutSize + failedCutSize, leftTreeSize, rightTreeSize, level};
-} // computeDistribSize
+}  // computeDistribSize
 
-} // namespace d4
+}  // namespace d4

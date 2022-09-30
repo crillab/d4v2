@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -52,19 +52,16 @@ PartitioningHeuristicBipartite::PartitioningHeuristicBipartite(
   m_nbDynamic = 0;
   m_pm = NULL;
   m_hypergraphExtractor = NULL;
-} // constructor
+}  // constructor
 
 /**
    Destructor.
 */
 PartitioningHeuristicBipartite::~PartitioningHeuristicBipartite() {
-  if (m_staticPartitioner)
-    delete m_staticPartitioner;
-  if (m_hypergraphExtractor)
-    delete m_hypergraphExtractor;
-  if (m_pm)
-    delete m_pm;
-} // destructor
+  if (m_staticPartitioner) delete m_staticPartitioner;
+  if (m_hypergraphExtractor) delete m_hypergraphExtractor;
+  if (m_pm) delete m_pm;
+}  // destructor
 
 /**
    Compute the equivalence class.
@@ -83,9 +80,8 @@ void PartitioningHeuristicBipartite::computeEquivClass(
     PartitioningHeuristic::computeEquivClass(m_em, m_s, component, unitEquiv,
                                              equivClass, equivVar);
   else
-    for (auto &v : component)
-      equivClass[v] = v;
-} // computeEquivclass
+    for (auto &v : component) equivClass[v] = v;
+}  // computeEquivclass
 
 /**
    Compute a cutset by computing a bipartition of the hypergraph of the clauses.
@@ -128,29 +124,24 @@ void PartitioningHeuristicBipartite::computeCutSet(std::vector<Var> &component,
                                                       m_partition, cutSet);
 
       // extend with equivalence literals.
-      for (auto &v : cutSet)
-        m_markedVar[v] = true;
+      for (auto &v : cutSet) m_markedVar[v] = true;
       for (auto &v : component) {
-        if (m_markedVar[v])
-          continue;
-        if (m_markedVar[m_equivClass[v]])
-          cutSet.push_back(v);
+        if (m_markedVar[v]) continue;
+        if (m_markedVar[m_equivClass[v]]) cutSet.push_back(v);
       }
-      for (auto &v : cutSet)
-        m_markedVar[v] = false;
+      for (auto &v : cutSet) m_markedVar[v] = false;
       if (!cutSet.size())
-        for (auto l : unitEquiv)
-          cutSet.push_back(l.var());
+        for (auto l : unitEquiv) cutSet.push_back(l.var());
     }
 
     m_om.postUpdate(unitEquiv);
   }
-} // computeCutset
+}  // computeCutset
 
 void PartitioningHeuristicBipartite::displayStat(std::ostream &out) {
   out << "c \033[1m\033[36mPartioning Information\033[0m\n";
   out << "c Number of static decomposition used: " << m_nbStatic << "\n";
   out << "c Number of dynamic decomposition used: " << m_nbDynamic << "\n";
-} // displayStat
+}  // displayStat
 
-} // namespace d4
+}  // namespace d4

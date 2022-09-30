@@ -3,16 +3,16 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
@@ -26,7 +26,7 @@
 
 namespace d4 {
 class PartitionerKahypar : public PartitionerManager {
-private:
+ private:
   std::vector<bool> m_markedNodes;
   std::vector<int> m_mapNodes;
 
@@ -36,7 +36,7 @@ private:
   std::vector<kahypar_partition_id_t> m_partition;
   kahypar_context_s *context;
 
-public:
+ public:
   PartitionerKahypar(unsigned maxNodes, unsigned maxEdges,
                      unsigned maxSumEdgeSize, std::ostream &out);
 
@@ -44,4 +44,4 @@ public:
   void computePartition(HyperGraph &hypergraph, Level level,
                         std::vector<int> &partition);
 };
-} // namespace d4
+}  // namespace d4
