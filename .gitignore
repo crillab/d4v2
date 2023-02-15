@@ -15,3 +15,4 @@ CMakeFiles
 *.o[dr]
 3rdParty/glucose-3.0/core/depend.mk
 *.a
+!3rdParty/patoh/libpatoh.a
