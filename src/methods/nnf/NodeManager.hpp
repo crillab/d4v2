@@ -252,8 +252,10 @@ class NodeManager {
      @param[in] nbVar, the number of variables in the problem.
    */
   static NodeManager<T> *makeNodeManager(unsigned nbVar) {
-    if (nbVar < (1 << 8)) return new NodeManagerTyped<T, uint8_t>();
-    if (nbVar < (1 << 16)) return new NodeManagerTyped<T, uint16_t>();
+	// One bit is reserved for the sign of the variable.
+	// Hence, with 8 bits we can store variables from -(2⁷-1) up to 2⁷-1. Same holds for 16 and 32 bits.
+	if (nbVar < (1 << 7)) return new NodeManagerTyped<T, uint8_t>();
+	if (nbVar < (1 << 15)) return new NodeManagerTyped<T, uint16_t>();
     return new NodeManagerTyped<T, uint32_t>();
   }  // makeNodeManager
 
