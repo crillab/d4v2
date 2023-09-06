@@ -13,6 +13,14 @@ set(Boost_USE_STATIC_LIBS ON)
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib)
+
+find_library(GMP_LIBRARY gmp REQUIRED)
+message(STATUS "Found GMP: ${GMP_LIBRARY}")
+
+find_library(GMPXX_LIBRARY gmpxx REQUIRED)
+message(STATUS "Found GMP C++: ${GMPXX_LIBRARY}")
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -82,7 +90,7 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-target_link_libraries(d4 -lgmpxx -lgmp ${Boost_LIBRARIES} glucose kahypar)
+target_link_libraries(d4 gmp gmpxx glucose kahypar)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4
   DESTINATION bin
