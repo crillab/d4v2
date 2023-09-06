@@ -92,6 +92,4 @@ add_executable(d4
 
 target_link_libraries(d4 gmp gmpxx glucose kahypar)
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4
-  DESTINATION bin
-  RENAME ${CMAKE_PROJECT_NAME}-d4)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4 DESTINATION bin)
