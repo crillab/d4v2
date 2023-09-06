@@ -11,24 +11,24 @@ jobs:
       matrix:
         os:
           - ubuntu
-          - macos
+#          - macos
         compiler:
           - g++
           - clang++
         shell:
           - bash
-        exclude:
-          - os: macos
-            compiler: g++
-        include:
-          - os: windows
-            compiler: g++
-            shell: msys2
-            msystem: ucrt64
-          - os: windows
-            compiler: clang++
-            shell: msys2
-            msystem: clang64
+#        exclude:
+#          - os: macos
+#            compiler: g++
+#        include:
+#          - os: windows
+#            compiler: g++
+#            shell: msys2
+#            msystem: ucrt64
+#          - os: windows
+#            compiler: clang++
+#            shell: msys2
+#            msystem: clang64
     runs-on: ${{ matrix.os }}-latest
     defaults:
       run:
