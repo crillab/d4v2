@@ -14,12 +14,13 @@ set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS program_options REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(3rdParty/glucose-3.0)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Workaround for kahypar's CMake config to find its own modules.
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/kahypar/cmake/modules)
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0 EXCLUDE_FROM_ALL)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/kahypar EXCLUDE_FROM_ALL)
 
 add_executable(d4
@@ -81,7 +82,7 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-target_link_libraries(d4 -lgmpxx -lgmp ${Boost_LIBRARIES} kahypar ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_standard.a)
+target_link_libraries(d4 -lgmpxx -lgmp ${Boost_LIBRARIES} glucose kahypar)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4
   DESTINATION bin
