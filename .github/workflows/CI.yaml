@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  - workflow_dispatch
+  - push
+
+jobs:
+  Build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu
+          - macos
+        compiler:
+          - g++
+          - clang++
+        shell:
+          - bash
+        exclude:
+          - os: macos
+            compiler: g++
+        include:
+          - os: windows
+            compiler: g++
+            shell: msys2
+            msystem: ucrt64
+          - os: windows
+            compiler: clang++
+            shell: msys2
+            msystem: clang64
+    runs-on: ${{ matrix.os }}-latest
+    defaults:
+      run:
+        shell: ${{ matrix.shell }} {0}
+    env:
+      CXX: ${{ matrix.compiler }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        if: ${{ matrix.os == 'ubuntu' }}
+        run: sudo apt install libboost-all-dev
+      - name: Install dependencies
+        if: ${{ matrix.os == 'macos' }}
+        run: |
+          brew install boost
+          echo "ZLIB_ROOT=$(brew --prefix zlib)" >> $GITHUB_ENV
+      - name: Install dependencies
+        if: ${{ matrix.os == 'windows' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          pacboy: >-
+            toolchain:p
+            cmake:p
+            ninja:p
+            gmp:p
+            boost:p
+      - name: Configure
+        run: cmake -B build
+      - name: Build
+        run: cmake --build build
