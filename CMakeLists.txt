@@ -70,6 +70,7 @@ add_executable(d4
     src/methods/QueryManager.cpp
     src/partitioner/PartitionerKahypar.cpp
     src/partitioner/PartitionerManager.cpp
+    src/partitioner/PartitionerPatoh.cpp
     src/preprocs/cnf/PreprocBackboneCnf.cpp
     src/preprocs/cnf/PreprocBasicCnf.cpp
     src/preprocs/PreprocManager.cpp
@@ -90,6 +91,6 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-target_link_libraries(d4 gmp gmpxx glucose kahypar)
+target_link_libraries(d4 gmp gmpxx glucose kahypar ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/patoh/libpatoh.a)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4 DESTINATION bin)
