@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(D4 VERSION 2.0 LANGUAGES CXX)
 
-option(BUILD_SHARED_LIBS OFF "Whether to build a shared (instead of static) library.")
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(BUILD_SHARED_LIBS OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
