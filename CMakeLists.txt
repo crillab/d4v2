@@ -35,8 +35,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/mt-kahypar/include)
 include_directories(${Boost_INCLUDE_DIRS})
 
-add_executable(d4
-    src/Main.cpp
+# Workaround for kahypar's CMake config to find its own modules.
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/kahypar/cmake/modules)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0 EXCLUDE_FROM_ALL)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/kahypar EXCLUDE_FROM_ALL)
+
+add_library(core
     src/caching/BucketAllocator.cpp
     src/caching/cnf/BucketInConstruction.cpp
     src/caching/DataInfo.cpp
@@ -94,7 +99,32 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-# Linking boost results in it being linked twice (probably because of mtkahypar's denependency on it).
-target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose mtkahypar)
+target_include_directories(core PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0
+    ${Boost_INCLUDE_DIRS}
+)
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4 DESTINATION bin)
+target_link_libraries(core ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose kahypar ${PATOH_LIBRARY})
+set_target_properties(core PROPERTIES OUTPUT_NAME "d4")
+
+add_executable(d4 src/Main.cpp)
+
+target_include_directories(d4 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(ddnnf_compiler src/DdnnfCompiler.cpp)
+
+target_include_directories(ddnnf_compiler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(ddnnf_compiler PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+set_target_properties(ddnnf_compiler PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/DdnnfCompiler.hpp)
+
+target_link_libraries(d4 core)
+target_link_libraries(ddnnf_compiler core)
+
+install(TARGETS d4 DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(TARGETS ddnnf_compiler
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)

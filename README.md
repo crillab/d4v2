@@ -50,6 +50,15 @@ The following command line is to solve WeightedMax#SAT instances as in [this art
 ./build/d4 -i file.wcnf -m max#sat --float 1 --maxsharpsat-option-and-dig 1 --maxsharpsat-option-greedy-init 0 --maxsharpsat-heuristic-phase-random 5 --maxsharpsat-heuristic-phase best
 ```
 
+### Library
+
+This version of d4 also includes a simple wrapper library to compile d-DNNFs.
+It is built together with the `d4` executable, available at `build/libddnnf_compiler.a` (on Unix systems).
+Currently, it only contains a single function being almost identical to `d4`'s `main`, setting the method to `ddnnf-compiler`.
+The corresponding header file is found at `include/DdnnfCompiler.hpp`
+
+The library is statically built and depending on code must be linked against all its dependencies.
+
 [cmake]: https://cmake.org
 [gmp]: https://gmplib.org
 [boost]: https://boost.org
