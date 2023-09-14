@@ -14,7 +14,6 @@
 ("occurrence-manager,om",boost::program_options::value<std::string>()->default_value("dynamic"),"The occurrence manager used. [add a description]")
 ("phase-heuristic,ph",boost::program_options::value<std::string>()->default_value("polarity"),"The way the phase of the next decision is selected (false, true, polarity or occurrence).")
 ("partitioning-heuristic,pvh",boost::program_options::value<std::string>()->default_value("decomposition-static-dual"),"The method used to compute a cut. [none, decomposition-static, bipartition-primal or bipartition-dual]")
-("partitioning-heuristic-partitioner,php",boost::program_options::value<std::string>()->default_value("patoh"),"The partitioner we will call (patoh or kahypar).")
 ("partitioning-heuristic-bipartite-phase",boost::program_options::value<std::string>()->default_value("none"),"Use a two phases heuristic, where the tree decomposition construction is given in parameter [none, natural, primal or dual].")
 ("partitioning-heuristic-bipartite-phase-dynamic",boost::program_options::value<double>()->default_value(0),"Use a static decomposition when it seems that the initial decomposition is no more good enough (the given value gives the balanced limit ratio).")
 ("partitioning-heuristic-bipartite-phase-static",boost::program_options::value<int>()->default_value(0),"Use a static decomposition when the number of variable is more than the given parameter. Switch to the dynamic decomposition otherwise. If 0, this option is deactivated.")
