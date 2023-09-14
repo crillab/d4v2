@@ -28,7 +28,7 @@
 
 namespace d4 {
 class HyperGraphExtractorDual : public HyperGraphExtractor {
- private:
+protected:
   std::vector<bool> m_markedVar;
   std::vector<int> m_unmarkSet;
 
@@ -48,12 +48,12 @@ class HyperGraphExtractorDual : public HyperGraphExtractor {
   void clashHyperEdgeIndex(HyperGraph &hypergraph, std::vector<int> &partition,
                            std::vector<unsigned> &indices);
 
- public:
+public:
   HyperGraphExtractorDual(unsigned nbVar, unsigned nbClause);
 
   void constructHyperGraph(SpecManagerCnf &om, std::vector<Var> &component,
                            std::vector<Var> &equivClass,
-                           std::vector<std::vector<Var> > &equivVar,
+                           std::vector<std::vector<Var>> &equivVar,
                            bool reduceFormula, std::vector<Var> &considered,
                            HyperGraph &hypergraph);
 
@@ -62,4 +62,4 @@ class HyperGraphExtractorDual : public HyperGraphExtractor {
                                 std::vector<int> &partition,
                                 std::vector<int> &cutSet);
 };
-}  // namespace d4
+} // namespace d4

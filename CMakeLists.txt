@@ -2,10 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 
 project(D4 VERSION 2.0 LANGUAGES CXX)
 
-set(BUILD_SHARED_LIBS OFF)
-
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0 EXCLUDE_FROM_ALL)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/mt-kahypar EXCLUDE_FROM_ALL)
 
 set(Boost_USE_STATIC_LIBS ON)
 
@@ -24,13 +25,8 @@ message(STATUS "Found patoh: ${PATOH_LIBRARY}")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/mt-kahypar/include)
 include_directories(${Boost_INCLUDE_DIRS})
-
-# Workaround for kahypar's CMake config to find its own modules.
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/kahypar/cmake/modules)
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0 EXCLUDE_FROM_ALL)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/kahypar EXCLUDE_FROM_ALL)
 
 add_executable(d4
     src/Main.cpp
@@ -69,7 +65,7 @@ add_executable(d4
     src/hyperGraph/HyperGraphExtractorPrimal.cpp
     src/methods/MethodManager.cpp
     src/methods/QueryManager.cpp
-    src/partitioner/PartitionerKahypar.cpp
+    src/partitioner/PartitionerKahyparMT.cpp
     src/partitioner/PartitionerManager.cpp
     src/partitioner/PartitionerPatoh.cpp
     src/preprocs/cnf/PreprocBackboneCnf.cpp
@@ -92,6 +88,6 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose kahypar ${PATOH_LIBRARY})
+target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose ${PATOH_LIBRARY} mtkahypar ${Boost_LIBRARIES})
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4 DESTINATION bin)

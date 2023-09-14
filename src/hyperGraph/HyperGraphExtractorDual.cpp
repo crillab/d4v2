@@ -38,7 +38,7 @@ HyperGraphExtractorDual::HyperGraphExtractorDual(unsigned nbVar,
   m_countClause.resize(nbClause + 1, 0);
 
   m_mapVarEdge.resize(nbVar + 1, nullptr);
-}  // constructor.
+} // constructor.
 
 /**
    Collect the set of hyper egdes (their indices actually) that are between
@@ -60,9 +60,10 @@ void HyperGraphExtractorDual::clashHyperEdgeIndex(
 
     for (unsigned j = 1; !clash && j < edge.getSize(); j++)
       clash = part != partition[edge[j]];
-    if (clash) indices.push_back(edge.getId());
+    if (clash)
+      indices.push_back(edge.getId());
   }
-}  // clashHyperEdgeIndex
+} // clashHyperEdgeIndex
 
 /**
    Check all the hyper edges in order to extract those their are conflictual
@@ -79,24 +80,28 @@ void HyperGraphExtractorDual::extractCutFromHyperGraph(
     std::vector<int> &partition, std::vector<int> &cutSet) {
   std::vector<unsigned> indices;
   clashHyperEdgeIndex(hypergraph, partition, indices);
-  for (auto &i : indices) cutSet.push_back(considered[i]);
+  for (auto &i : indices)
+    cutSet.push_back(considered[i]);
 
   if (!cutSet.size() && considered.size()) {
     // check if we only have one partition.
     int part = -1;
     for (auto edge : hypergraph) {
-      if (part == -1) part = partition[edge[0]];
+      if (part == -1)
+        part = partition[edge[0]];
       for (auto e : edge)
         if (part != partition[e]) {
           part = -2;
           break;
         }
-      if (part == -2) break;
+      if (part == -2)
+        break;
     }
 
-    if (part != -2) cutSet = considered;
+    if (part != -2)
+      cutSet = considered;
   }
-}  // extractCutFromHyperGraph
+} // extractCutFromHyperGraph
 
 /**
    Reduce the hyper graph by removing indices of clauses that subsubmes others
@@ -114,23 +119,26 @@ void HyperGraphExtractorDual::reduceHyperGraph(
   // map the variables to the edges and compute the clause size.
   unsigned *edge = hypergraph.getEdges();
   for (auto &idx : idxClauses)
-    m_sizeClause[idx] = 0;  // set the clause sizes to 0.
+    m_sizeClause[idx] = 0; // set the clause sizes to 0.
   for (auto &v : considered) {
     m_mapVarEdge[v] = edge;
-    for (unsigned j = 0; j < *edge; j++) m_sizeClause[edge[1 + j]]++;
+    for (unsigned j = 0; j < *edge; j++)
+      m_sizeClause[edge[1 + j]]++;
     edge += *edge + 1;
   }
 
   // sort the clause indices to put first the biggest clauses.
   sort(idxClauses.begin(), idxClauses.end(),
        [this](const int i, const int j) -> bool {
-         if (m_sizeClause[i] == m_sizeClause[j]) return i > j;
+         if (m_sizeClause[i] == m_sizeClause[j])
+           return i > j;
          return m_sizeClause[i] > m_sizeClause[j];
        });
 
   std::vector<Var> vars;
   for (auto &idx : idxClauses) {
-    if (!m_keepClause[idx]) continue;
+    if (!m_keepClause[idx])
+      continue;
 
     vars.resize(0);
     std::vector<Lit> &cl = om.getClause(idx);
@@ -143,9 +151,10 @@ void HyperGraphExtractorDual::reduceHyperGraph(
     }
 
     // we count how many var we cover.
-    for (auto &icl : idxClauses) m_countClause[icl] = 0;
+    for (auto &icl : idxClauses)
+      m_countClause[icl] = 0;
     for (auto &v : vars) {
-      m_markedVar[v] = false;  // unmarked for the next runs.
+      m_markedVar[v] = false; // unmarked for the next runs.
       unsigned *tab = m_mapVarEdge[v];
       for (unsigned j = 0; j < *tab; j++) {
         assert(tab[1 + j] < m_countClause.size());
@@ -156,7 +165,8 @@ void HyperGraphExtractorDual::reduceHyperGraph(
     // we remove the clauses that are covered.
     assert(m_countClause[idx] == m_sizeClause[idx]);
     for (auto &icl : idxClauses) {
-      if (icl == idx || !m_keepClause[icl]) continue;
+      if (icl == idx || !m_keepClause[icl])
+        continue;
       assert(m_countClause[icl] <= m_sizeClause[icl]);
       m_keepClause[icl] = m_countClause[icl] < m_sizeClause[icl];
     }
@@ -178,7 +188,7 @@ void HyperGraphExtractorDual::reduceHyperGraph(
     hypergraph[pos] = cpt;
     pos += 1 + cpt;
   }
-}  // reduceHyperGraph
+} // reduceHyperGraph
 
 /**
    Extract the hyper graph from the problem regarding the options.
@@ -205,7 +215,8 @@ void HyperGraphExtractorDual::constructHyperGraph(
     size = 0;
 
     for (auto &v : vec) {
-      if (om.varIsAssigned(v)) continue;
+      if (om.varIsAssigned(v))
+        continue;
       assert(!m_markedVar[v]);
 
       for (auto l : {Lit::makeLitFalse(v), Lit::makeLitTrue(v)}) {
@@ -255,7 +266,8 @@ void HyperGraphExtractorDual::constructHyperGraph(
 
   // next consider the remaining variables (unmarked).
   for (auto &v : component) {
-    if (m_markedVar[v] || om.varIsAssigned(v)) continue;
+    if (m_markedVar[v] || om.varIsAssigned(v))
+      continue;
     m_markedVar[v] = true;
 
     unsigned &size = hypergraph[pos++];
@@ -294,14 +306,16 @@ void HyperGraphExtractorDual::constructHyperGraph(
   }
 
   // unmark.
-  for (auto &v : component) m_markedVar[v] = false;
+  for (auto &v : component)
+    m_markedVar[v] = false;
 
   // remove useless edges.
   if (reduceFormula)
     reduceHyperGraph(om, hypergraph, considered, m_idxClauses, equivClass);
 
   // unmark.
-  for (auto &idx : m_idxClauses) m_keepClause[idx] = false;
-}  // constructHyperGraph
+  for (auto &idx : m_idxClauses)
+    m_keepClause[idx] = false;
+} // constructHyperGraph
 
-}  // namespace d4
+} // namespace d4

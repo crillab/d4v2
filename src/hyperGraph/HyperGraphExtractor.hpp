@@ -27,7 +27,7 @@
 
 namespace d4 {
 class HyperGraphExtractor {
- public:
+public:
   virtual ~HyperGraphExtractor() {}
 
   virtual void constructHyperGraph(SpecManagerCnf &om,
@@ -43,4 +43,4 @@ class HyperGraphExtractor {
                                         std::vector<int> &partition,
                                         std::vector<int> &cutSet) = 0;
 };
-}  // namespace d4
+} // namespace d4
