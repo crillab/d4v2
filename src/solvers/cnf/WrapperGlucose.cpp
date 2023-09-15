@@ -18,11 +18,10 @@
 
 #include "WrapperGlucose.hpp"
 
-#include <bits/stdint-uintn.h>
-
 #include <iostream>
 #include <typeinfo>
 #include <vector>
+#include <cstdint>
 
 #include "3rdParty/glucose-3.0/core/Solver.h"
 #include "3rdParty/glucose-3.0/core/SolverTypes.h"

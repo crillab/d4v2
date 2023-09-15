@@ -17,12 +17,12 @@
  */
 #pragma once
 
-#include <bits/stdint-uintn.h>
 #include <boost/program_options.hpp>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <sys/types.h>
+#include <cstdint>
 
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"

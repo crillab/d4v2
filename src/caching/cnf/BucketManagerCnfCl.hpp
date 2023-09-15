@@ -17,12 +17,12 @@
  */
 #pragma once
 
-#include <bits/stdint-uintn.h>
 #include <sys/types.h>
 
 #include <algorithm>
 #include <bitset>
 #include <cstring>
+#include <cstdint>
 
 #include "BucketInConstruction.hpp"
 #include "BucketSortInfo.hpp"
