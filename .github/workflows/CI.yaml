@@ -42,11 +42,11 @@ jobs:
           submodules: 'recursive'
       - name: Install dependencies
         if: ${{ matrix.os == 'ubuntu' }}
-        run: sudo apt install libboost-all-dev
+        run: sudo apt install  libtbb-dev libhwloc-dev libboost-all-dev
       - name: Install dependencies
         if: ${{ matrix.os == 'macos' }}
         run: |
-          brew install boost
+          brew install tbb hwloc boost
           echo "ZLIB_ROOT=$(brew --prefix zlib)" >> $GITHUB_ENV
       - name: Install dependencies
         if: ${{ matrix.os == 'windows' }}
@@ -59,6 +59,8 @@ jobs:
             cmake:p
             ninja:p
             gmp:p
+            tbb:p
+            hwloc:p
             boost:p
       - name: Configure
         run: cmake -B build
