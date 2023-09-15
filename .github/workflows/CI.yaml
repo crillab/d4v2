@@ -13,28 +13,31 @@ jobs:
           - ubuntu
 #          - macos
         compiler:
-          - g++
-          - clang++
+          - cc: gcc
+            cxx: g++
+          - cc: clang
+            cxx: clang++
         shell:
           - bash
 #        exclude:
 #          - os: macos
-#            compiler: g++
-#        include:
-#          - os: windows
-#            compiler: g++
-#            shell: msys2
-#            msystem: ucrt64
-#          - os: windows
-#            compiler: clang++
-#            shell: msys2
-#            msystem: clang64
+#            compiler: { cc: gcc, cxx: g++ }
+        include:
+          - os: windows
+            compiler: { cc: gcc, cxx: g++ }
+            shell: msys2
+            msystem: ucrt64
+          - os: windows
+            compiler: { cc: clang, cxx: clang++ }
+            shell: msys2
+            msystem: clang64
     runs-on: ${{ matrix.os }}-latest
     defaults:
       run:
         shell: ${{ matrix.shell }} {0}
     env:
-      CXX: ${{ matrix.compiler }}
+      CC: ${{ matrix.compiler.cc }}
+      CXX: ${{ matrix.compiler.cxx }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,11 +45,11 @@ jobs:
           submodules: 'recursive'
       - name: Install dependencies
         if: ${{ matrix.os == 'ubuntu' }}
-        run: sudo apt install  libtbb-dev libhwloc-dev libboost-all-dev
+        run: sudo apt install ninja-build libtbb-dev libhwloc-dev libboost-program-options-dev
       - name: Install dependencies
         if: ${{ matrix.os == 'macos' }}
         run: |
-          brew install tbb hwloc boost
+          brew install ninja tbb hwloc boost
           echo "ZLIB_ROOT=$(brew --prefix zlib)" >> $GITHUB_ENV
       - name: Install dependencies
         if: ${{ matrix.os == 'windows' }}
@@ -62,7 +65,10 @@ jobs:
             tbb:p
             hwloc:p
             boost:p
+      - name: Setup dependencies
+        if: ${{ matrix.os == 'windows' }}
+        run: mv /${{ matrix.msystem }}/lib/libtbb12.dll.a /${{ matrix.msystem }}/lib/libtbb.dll.a
       - name: Configure
-        run: cmake -B build
+        run: cmake -B build -G Ninja
       - name: Build
         run: cmake --build build
