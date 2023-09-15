@@ -17,8 +17,6 @@
  */
 #include "PreprocBackboneCnf.hpp"
 
-#include <bits/types/clock_t.h>
-
 #include <ctime>
 
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
