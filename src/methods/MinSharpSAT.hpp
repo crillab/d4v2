@@ -50,7 +50,7 @@ template <class T> class MinSharpSAT : public MethodManager {
 
   struct MinSharpSatResult {
     T count;
-    u_int8_t *valuation;
+    uint8_t *valuation;
   };
 
 private:
@@ -75,7 +75,7 @@ private:
   T m_minCount = T(-1);
 
   const unsigned c_sizePage = 1 << 18;
-  std::vector<u_int8_t *> m_memoryPages;
+  std::vector<uint8_t *> m_memoryPages;
   unsigned m_posInMemoryPages;
   unsigned m_sizeArray;
 
@@ -162,7 +162,7 @@ public:
     m_out << "c\n";
 
     // init the memory requierd for storing interpretation.
-    m_memoryPages.push_back(new u_int8_t[c_sizePage]);
+    m_memoryPages.push_back(new uint8_t[c_sizePage]);
     m_posInMemoryPages = 0;
     m_sizeArray = m_problem->getMaxVar().size();
   } // constructor
@@ -273,13 +273,13 @@ private:
    * @brief Get a pointer on an allocated array of size m_sizeArray (which is
    * set once in the constructor).
    *
-   * @return a pointer on a u_int8_t array.
+   * @return a pointer on a uint8_t array.
    */
-  u_int8_t *getArray() {
-    u_int8_t *ret = &(m_memoryPages.back()[m_posInMemoryPages]);
+  uint8_t *getArray() {
+    uint8_t *ret = &(m_memoryPages.back()[m_posInMemoryPages]);
     m_posInMemoryPages += m_sizeArray;
     if (m_posInMemoryPages > c_sizePage) {
-      m_memoryPages.push_back(new u_int8_t[c_sizePage]);
+      m_memoryPages.push_back(new uint8_t[c_sizePage]);
       m_posInMemoryPages = 0;
       ret = m_memoryPages.back();
     }

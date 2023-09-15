@@ -58,10 +58,10 @@ class MaxSharpSAT : public MethodManager {
 
   struct MaxSharpSatResult {
     T count;
-    u_int8_t *valuation;
+    uint8_t *valuation;
 
     MaxSharpSatResult() : count(T(0)), valuation(NULL) {}
-    MaxSharpSatResult(const T c, u_int8_t *v) : count(c), valuation(v) {}
+    MaxSharpSatResult(const T c, uint8_t *v) : count(c), valuation(v) {}
 
     void display(unsigned size) {
       assert(valuation);
@@ -96,7 +96,7 @@ class MaxSharpSAT : public MethodManager {
   unsigned m_countUpdateMaxCount = 0;
 
   const unsigned c_sizePage = 1 << 18;
-  std::vector<u_int8_t *> m_memoryPages;
+  std::vector<uint8_t *> m_memoryPages;
   unsigned m_posInMemoryPages;
   unsigned m_sizeArray;
 
@@ -211,7 +211,7 @@ class MaxSharpSAT : public MethodManager {
     m_out << "c\n";
 
     // init the memory required for storing interpretation.
-    m_memoryPages.push_back(new u_int8_t[c_sizePage]);
+    m_memoryPages.push_back(new uint8_t[c_sizePage]);
     m_posInMemoryPages = 0;
     m_sizeArray = m_problem->getMaxVar().size();
 
@@ -345,13 +345,13 @@ class MaxSharpSAT : public MethodManager {
    * @brief Get a pointer on an allocated array of size m_sizeArray (which is
    * set once in the constructor).
    *
-   * @return a pointer on a u_int8_t array.
+   * @return a pointer on a uint8_t array.
    */
-  u_int8_t *getArray() {
-    u_int8_t *ret = &(m_memoryPages.back()[m_posInMemoryPages]);
+  uint8_t *getArray() {
+    uint8_t *ret = &(m_memoryPages.back()[m_posInMemoryPages]);
     m_posInMemoryPages += m_sizeArray;
     if (m_posInMemoryPages > c_sizePage) {
-      m_memoryPages.push_back(new u_int8_t[c_sizePage]);
+      m_memoryPages.push_back(new uint8_t[c_sizePage]);
       m_posInMemoryPages = 0;
       ret = m_memoryPages.back();
     }
@@ -409,8 +409,8 @@ class MaxSharpSAT : public MethodManager {
    * result.
    * @param orValuation is another 'boolean' vector used for the OR
    */
-  void orOnMaxVar(std::vector<Var> &vars, u_int8_t *resValuation,
-                  u_int8_t *orValuation) {
+  void orOnMaxVar(std::vector<Var> &vars, uint8_t *resValuation,
+                  uint8_t *orValuation) {
     for (auto v : vars) {
       if (m_isMaxDecisionVariable[v])
         resValuation[m_redirectionPos[v]] |= orValuation[m_redirectionPos[v]];

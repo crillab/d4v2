@@ -37,7 +37,7 @@ struct AndGate {
 class AndGatesExtractor {
  private:
   std::vector<bool> m_markedVar;
-  std::vector<u_int8_t> m_flagVar;
+  std::vector<uint8_t> m_flagVar;
 
  public:
   AndGatesExtractor() { ; }  // empty constructor
