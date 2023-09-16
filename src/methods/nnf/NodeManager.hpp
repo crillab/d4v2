@@ -252,8 +252,8 @@ class NodeManager {
      @param[in] nbVar, the number of variables in the problem.
    */
   static NodeManager<T> *makeNodeManager(unsigned nbVar) {
-    if (nbVar < (1 << 8)) return new NodeManagerTyped<T, uint8_t>();
-    if (nbVar < (1 << 16)) return new NodeManagerTyped<T, uint16_t>();
+    if (nbVar < (1 << 7)) return new NodeManagerTyped<T, uint8_t>();
+    if (nbVar < (1 << 15)) return new NodeManagerTyped<T, uint16_t>();
     return new NodeManagerTyped<T, uint32_t>();
   }  // makeNodeManager
 
