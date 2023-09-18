@@ -84,6 +84,6 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose mtkahypar ${Boost_LIBRARIES})
+target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose ${Boost_LIBRARIES} mtkahypar)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4 DESTINATION bin)
