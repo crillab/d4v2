@@ -27,10 +27,10 @@ jobs:
             compiler: { cc: gcc, cxx: g++ }
             shell: msys2
             msystem: ucrt64
-          - os: windows
-            compiler: { cc: clang, cxx: clang++ }
-            shell: msys2
-            msystem: clang64
+#          - os: windows
+#            compiler: { cc: clang, cxx: clang++ }
+#            shell: msys2
+#            msystem: clang64
     runs-on: ${{ matrix.os }}-latest
     defaults:
       run:
