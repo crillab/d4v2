@@ -17,19 +17,27 @@ jobs:
             cxx: g++
           - cc: clang
             cxx: clang++
+        launcher:
+          - sccache
         shell:
           - bash
+        binary:
+          - d4
 #        exclude:
 #          - os: macos
 #            compiler: { cc: gcc, cxx: g++ }
         include:
           - os: windows
             compiler: { cc: gcc, cxx: g++ }
+            launcher: ''
             shell: msys2
+            binary: d4.exe
             msystem: ucrt64
 #          - os: windows
 #            compiler: { cc: clang, cxx: clang++ }
+#            launcher: ''
 #            shell: msys2
+#            binary: d4.exe
 #            msystem: clang64
     runs-on: ${{ matrix.os }}-latest
     defaults:
@@ -38,6 +46,8 @@ jobs:
     env:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
+      CMAKE_C_COMPILER_LAUNCHER: ${{ matrix.launcher }}
+      CMAKE_CXX_COMPILER_LAUNCHER: ${{ matrix.launcher }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,7 +78,14 @@ jobs:
       - name: Setup dependencies
         if: ${{ matrix.os == 'windows' }}
         run: mv /${{ matrix.msystem }}/lib/libtbb12.dll.a /${{ matrix.msystem }}/lib/libtbb.dll.a
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
       - name: Configure
         run: cmake -B build -G Ninja
       - name: Build
         run: cmake --build build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: d4-${{ matrix.os }}-${{ matrix.compiler.cc }}
+          path: build/${{ matrix.binary }}
