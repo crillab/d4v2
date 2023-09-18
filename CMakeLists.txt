@@ -84,6 +84,7 @@ add_executable(d4
     src/utils/EquivExtractor.cpp
 )
 
-target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose ${Boost_LIBRARIES} mtkahypar)
+# Linking boost results in it being linked twice (probably because of mtkahypar's denependency on it).
+target_link_libraries(d4 ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose mtkahypar)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4 DESTINATION bin)
