@@ -11,7 +11,6 @@ jobs:
       matrix:
         os:
           - ubuntu
-#          - macos
         compiler:
           - cc: gcc
             cxx: g++
@@ -23,9 +22,6 @@ jobs:
           - bash
         binary:
           - d4
-#        exclude:
-#          - os: macos
-#            compiler: { cc: gcc, cxx: g++ }
         include:
           - os: windows
             compiler: { cc: gcc, cxx: g++ }
@@ -56,11 +52,6 @@ jobs:
       - name: Install dependencies
         if: ${{ matrix.os == 'ubuntu' }}
         run: sudo apt install ninja-build libtbb-dev libhwloc-dev libboost-program-options-dev
-      - name: Install dependencies
-        if: ${{ matrix.os == 'macos' }}
-        run: |
-          brew install ninja tbb hwloc boost
-          echo "ZLIB_ROOT=$(brew --prefix zlib)" >> $GITHUB_ENV
       - name: Install dependencies
         if: ${{ matrix.os == 'windows' }}
         uses: msys2/setup-msys2@v2
