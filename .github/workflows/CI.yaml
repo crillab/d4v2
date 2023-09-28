@@ -44,6 +44,7 @@ jobs:
       CXX: ${{ matrix.compiler.cxx }}
       CMAKE_C_COMPILER_LAUNCHER: ${{ matrix.launcher }}
       CMAKE_CXX_COMPILER_LAUNCHER: ${{ matrix.launcher }}
+      SCCACHE_GHA_ENABLED: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
