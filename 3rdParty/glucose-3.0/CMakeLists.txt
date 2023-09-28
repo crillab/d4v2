@@ -2,11 +2,13 @@ cmake_minimum_required(VERSION 3.12)
 
 project(glucose VERSION 3.0 LANGUAGES CXX)
 
-option(BUILD_SHARED_LIBS OFF "Whether to build a shared (instead of static) library.")
+option(BUILD_SHARED_LIBS "Whether to build shared libraries." OFF)
 
 include(GNUInstallDirs)
 
-set(ZLIB_USE_STATIC_LIBS ON)
+if(NOT BUILD_SHARED_LIBS)
+    set(ZLIB_USE_STATIC_LIBS ON)
+endif()
 
 find_package(ZLIB REQUIRED)
 
@@ -27,7 +29,7 @@ install(TARGETS glucose
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-add_executable(binary EXCLUDE_FROM_ALL simp/Main.cc)
+add_executable(binary simp/Main.cc)
 set_target_properties(binary PROPERTIES OUTPUT_NAME glucose)
 target_link_libraries(binary glucose)
 

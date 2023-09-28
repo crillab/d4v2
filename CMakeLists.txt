@@ -2,17 +2,23 @@ cmake_minimum_required(VERSION 3.16)
 
 project(D4 VERSION 2.0 LANGUAGES CXX)
 
+option(BUILD_SHARED_LIBS "Whether to build shared libraries." OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0 EXCLUDE_FROM_ALL)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/mt-kahypar EXCLUDE_FROM_ALL)
 
-set(Boost_USE_STATIC_LIBS ON)
+if(NOT BUILD_SHARED_LIBS)
+    set(Boost_USE_STATIC_LIBS ON)
+endif()
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib)
+if(NOT BUILD_SHARED_LIBS)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib)
+endif()
 
 find_library(GMP_LIBRARY gmp REQUIRED)
 message(STATUS "Found GMP: ${GMP_LIBRARY}")
