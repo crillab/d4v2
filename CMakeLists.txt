@@ -43,6 +43,11 @@ add_library(caching OBJECT
     src/caching/DataInfo.cpp
 )
 
+add_library(config OBJECT
+    src/config/Config.cpp
+    src/config/ConfigConverter.cpp
+)
+
 add_library(heuristics OBJECT
     src/heuristics/cnf/PartitioningHeuristicBipartite.cpp
     src/heuristics/cnf/PartitioningHeuristicBipartiteDual.cpp
@@ -123,6 +128,7 @@ add_library(utils OBJECT
 )
 
 add_library(core STATIC
+    $<TARGET_OBJECTS:config>
     $<TARGET_OBJECTS:caching>
     $<TARGET_OBJECTS:heuristics>
     $<TARGET_OBJECTS:hyperGraph>
