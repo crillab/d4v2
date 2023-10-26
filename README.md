@@ -8,6 +8,8 @@
  - [GMP][gmp] (with C++ bindings)
  - [Boost][boost]
  - [zlib][zlib]
+ - [TBB][tbb]
+ - [hwloc][hwloc]
 
 ### Build
 
@@ -53,3 +55,5 @@ The following command line is to solve WeightedMax#SAT instances as in [this art
 [boost]: https://boost.org
 [zlib]: https://zlib.net
 [ninja]: https://github.com/ninja-build/ninja
+[tbb]: https://github.com/oneapi-src/oneTBB
+[hwloc]: https://www.open-mpi.org/projects/hwloc
