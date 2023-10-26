@@ -16,6 +16,8 @@ endif()
 
 find_package(Boost COMPONENTS program_options REQUIRED)
 
+set(_gmp_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+
 if(NOT BUILD_SHARED_LIBS)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib)
 endif()
@@ -25,6 +27,8 @@ message(STATUS "Found GMP: ${GMP_LIBRARY}")
 
 find_library(GMPXX_LIBRARY gmpxx REQUIRED)
 message(STATUS "Found GMP C++: ${GMPXX_LIBRARY}")
+
+set(CMAKE_FIND_LIBRARY_SUFFIXES ${_gmp_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0)
