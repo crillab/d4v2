@@ -73,7 +73,7 @@ jobs:
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Configure
-        run: cmake -B build -G Ninja
+        run: cmake -DBUILD_SHARED_LIBS=true -B build -G Ninja
       - name: Build
         run: cmake --build build
       - name: Upload artifacts
