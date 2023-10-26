@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(D4 VERSION 2.0 LANGUAGES CXX)
 
-option(BUILD_SHARED_LIBS "Whether to build shared libraries." OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries." OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
