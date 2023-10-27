@@ -36,7 +36,7 @@ class Counter {
      As for the method manager, but we return a counter (actually we also verify
      the it is a counter that is requiered).
 
-     @param[in] vm, the map of option.
+     @param[in] config, the configuration.
      @param[in] out, the stream where are print the information.
      @param[in] meth, the method we search to construct.
      @param[in] precision, the precision for the bignum.
@@ -44,7 +44,7 @@ class Counter {
 
      \return a counter.
   */
-  static Counter<T> *makeCounter(po::variables_map &vm, ProblemManager *problem,
+  static Counter<T> *makeCounter(Config &config, ProblemManager *problem,
                                  std::string meth, bool isFloat, int precision,
                                  std::ostream &out,
                                  LastBreathPreproc &lastBreath) {
@@ -53,10 +53,10 @@ class Counter {
         precision);  // we set the precision
 
     if (meth == "counting")
-      return new DpllStyleMethod<T, T>(vm, meth, isFloat, problem, out,
+      return new DpllStyleMethod<T, T>(config, meth, isFloat, problem, out,
                                        lastBreath);
     if (meth == "ddnnf-compiler")
-      return new DpllStyleMethod<T, Node<T> *>(vm, meth, isFloat, problem, out,
+      return new DpllStyleMethod<T, Node<T> *>(config, meth, isFloat, problem, out,
                                                lastBreath);
 
     throw(BadBehaviourException(

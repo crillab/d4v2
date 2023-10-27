@@ -25,22 +25,18 @@
 namespace d4 {
 
 /**
-   Select from the arguments store in vm the good problem manager and return it.
+   Select from the arguments store in config the good problem manager and return it.
 
-   @param[in] vm, the arguments on the command line.
+   @param[in] config, the configuration.
 
    \return the problem manager that fits the command line.
  */
-ProblemManager *ProblemManager::makeProblemManager(po::variables_map &vm,
+ProblemManager *ProblemManager::makeProblemManager(Config &config,
                                                    std::ostream &out) {
-  std::string in = vm["input"].as<std::string>();
-  std::string inType = vm["input-type"].as<std::string>();
-  std::string meth = vm["method"].as<std::string>();
-
-  out << "c [CONSTRUCTOR] Problem: " << in << " " << inType << "\n";
+  out << "c [CONSTRUCTOR] Problem: " << config.input << " " << config.input_type << "\n";
 
   ProblemManager *ret = NULL;
-  if (inType == "cnf" || inType == "dimacs") ret = new ProblemManagerCnf(in);
+  if (config.input_type == "cnf" || config.input_type == "dimacs") ret = new ProblemManagerCnf(config.input);
 
   if (!ret)
     throw(

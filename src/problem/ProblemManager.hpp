@@ -20,12 +20,11 @@
 
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <boost/multiprecision/gmp.hpp>
-#include <boost/program_options.hpp>
 
 #include "src/problem/ProblemTypes.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 class ProblemManager {
  protected:
   unsigned m_nbVar;
@@ -37,7 +36,7 @@ class ProblemManager {
   bool m_isUnsat = false;
 
  public:
-  static ProblemManager *makeProblemManager(po::variables_map &vm,
+  static ProblemManager *makeProblemManager(Config &config,
                                             std::ostream &out);
 
   virtual ~ProblemManager() { ; }

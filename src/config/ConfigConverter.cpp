@@ -1,3 +1,4 @@
+#include <iostream>
 #include "ConfigConverter.hpp"
 
 namespace d4 {
@@ -5,7 +6,13 @@ namespace d4 {
     Config config;
     config.input = vm["input"].as<string>();
     config.input_type = vm["input-type"].as<string>();
-    config.method = vm["method"].as<string>();
+
+    if (vm.count("method")) {
+      config.method = vm["method"].as<string>();
+    } else {
+      config.method = "";
+    }
+
     config.maxsharpsat_threshold = vm["maxsharpsat-threshold"].as<double>();
     config.maxsharpsat_heuristic_phase = vm["maxsharpsat-heuristic-phase"].as<string>();
     config.maxsharpsat_heuristic_phase_random = vm["maxsharpsat-heuristic-phase-random"].as<unsigned>();
@@ -30,7 +37,7 @@ namespace d4 {
     config.cache_size_first_page = vm["cache-size-first-page"].as<unsigned long>();
     config.cache_size_additional_page = vm["cache-size-additional-page"].as<unsigned long>();
     config.cache_store_strategy = vm["cache-store-strategy"].as<string>();
-    config.cache_clause_representation = vm["cache_clause_representation"].as<string>();
+    config.cache_clause_representation = vm["cache-clause-representation"].as<string>();
     config.cache_clause_representation_combi_limitVar_sym = vm["cache-clause-representation-combi-limitVar-sym"].as<unsigned>();
     config.cache_clause_representation_combi_limitVar_index = vm["cache-clause-representation-combi-limitVar-index"].as<unsigned>();
     config.cache_limit_number_variable = vm["cache-limit-number-variable"].as<unsigned>();
@@ -40,10 +47,23 @@ namespace d4 {
     config.phase_heuristic_reversed = vm["phase-heuristic-reversed"].as<bool>();
     config.float_precision = vm["float-precision"].as<int>();
     config.isFloat = vm["float"].as<bool>();
-    config.dump_ddnnf = vm["dump-ddnnf"].as<string>();
-    config.query = vm["query"].as<string>();
+
+    if (vm.count("dump-ddnnf")) {
+      config.dump_ddnnf = vm["dump-ddnnf"].as<string>();
+    } else {
+      config.dump_ddnnf = "";
+    }
+
+    if (vm.count("query")) {
+      config.query = vm["query"].as<string>();
+    } else {
+      config.query = "";
+    }
+
     config.projMC_refinement = vm["projMC-refinement"].as<bool>();
     config.keyword_output_format_solution = vm["keyword-output-format-solution"].as<string>();
     config.output_format = vm["output-format"].as<string>();
+
+    return config;
   }
 };

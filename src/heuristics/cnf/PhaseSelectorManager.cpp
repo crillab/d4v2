@@ -47,22 +47,15 @@ PhaseSelectorManager::PhaseSelectorManager(
    static decomposition to the dynamic one.
  */
 PhaseSelectorManager *PhaseSelectorManager::makePhaseSelectorManager(
-    po::variables_map &vm, PartitioningHeuristicStaticSingle *staticPartitioner,
+    Config &config, PartitioningHeuristicStaticSingle *staticPartitioner,
     std::ostream &out) {
-  int limitPhase =
-      vm["partitioning-heuristic-bipartite-phase-static"].as<int>();
-  double dynamicPhase =
-      vm["partitioning-heuristic-bipartite-phase-dynamic"].as<double>();
-  std::string phase =
-      vm["partitioning-heuristic-bipartite-phase"].as<std::string>();
-
-  if (phase == "none" || (limitPhase <= 0 && !dynamicPhase))
+  if (config.partitioning_heuristic_bipartite_phase == "none" || (config.partitioning_heuristic_bipartite_phase_static <= 0 && !config.partitioning_heuristic_bipartite_phase_dynamic))
     return new PhaseSelectorNone(staticPartitioner, out);
 
-  if (!dynamicPhase)
-    return new PhaseSelectorStatic(staticPartitioner, limitPhase, out);
+  if (!config.partitioning_heuristic_bipartite_phase_dynamic)
+    return new PhaseSelectorStatic(staticPartitioner, config.partitioning_heuristic_bipartite_phase_static, out);
 
-  return new PhaseSelectorDynamic(staticPartitioner, dynamicPhase, out);
+  return new PhaseSelectorDynamic(staticPartitioner, config.partitioning_heuristic_bipartite_phase_dynamic, out);
 }  // makePhaseSelectorManager
 
 }  // namespace d4

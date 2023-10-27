@@ -27,14 +27,14 @@ namespace d4 {
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
  */
 PartitioningHeuristicStaticSingleDual::PartitioningHeuristicStaticSingleDual(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, std::ostream &out)
+    Config &config, WrapperSolver &s, SpecManager &om, std::ostream &out)
     : PartitioningHeuristicStaticSingleDual(
-          vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
+          config, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
@@ -43,7 +43,7 @@ PartitioningHeuristicStaticSingleDual::PartitioningHeuristicStaticSingleDual(
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
    @param[in] nbClause, the number of clauses.
@@ -51,14 +51,13 @@ PartitioningHeuristicStaticSingleDual::PartitioningHeuristicStaticSingleDual(
    @param[in] sumSize, which give the number of literals.
  */
 PartitioningHeuristicStaticSingleDual::PartitioningHeuristicStaticSingleDual(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+    Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
     int nbVar, int sumSize, std::ostream &out)
-    : PartitioningHeuristicStaticSingle(vm, s, om, nbClause, nbVar, sumSize,
+    : PartitioningHeuristicStaticSingle(config, s, om, nbClause, nbVar, sumSize,
                                         out) {
   out << "c [CONSTRUCTOR] Static partitioner: dual\n";
 
-  m_pm = PartitionerManager::makePartitioner(vm, m_nbClause, m_nbVar, sumSize,
-                                             out);
+  m_pm = PartitionerManager::makePartitioner(m_nbClause, m_nbVar, sumSize,out);
   m_hypergraph.init(m_nbVar + m_nbClause + sumSize + 1);
   m_hypergraphExtractor = new HyperGraphExtractorDual(m_nbVar, m_nbClause);
   m_maxNbNodes = m_nbClause + 1;

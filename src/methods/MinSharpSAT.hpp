@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -27,6 +26,7 @@
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"
 #include "src/caching/TmpEntry.hpp"
+#include "src/config/Config.hpp"
 #include "src/heuristics/PartitioningHeuristic.hpp"
 #include "src/heuristics/PhaseHeuristic.hpp"
 #include "src/heuristics/ScoringMethod.hpp"
@@ -42,7 +42,6 @@
 #include "MethodManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 template <class T> class Counter;
 
 template <class T> class MinSharpSAT : public MethodManager {
@@ -95,9 +94,9 @@ public:
   /**
      Constructor.
 
-     @param[in] vm, the list of options.
+     @param[in] config, the configuration.
    */
-  MinSharpSAT(po::variables_map &vm, std::string &meth, bool isFloat,
+  MinSharpSAT(Config &config, std::string &meth, bool isFloat,
               ProblemManager *initProblem, std::ostream &out,
               LastBreathPreproc &lastBreath)
       : m_problem(initProblem), m_out(nullptr) {
@@ -107,7 +106,7 @@ public:
     m_out.basic_ios<char>::rdbuf(out.rdbuf());
 
     // we create the SAT solver.
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(config, m_out);
     assert(m_solver);
     m_panicMode = lastBreath.panic;
     m_solver->initSolver(*m_problem);
@@ -116,13 +115,13 @@ public:
     m_solver->setNeedModel(true);
 
     // we initialize the object that will give info about the problem.
-    m_specs = SpecManager::makeSpecManager(vm, *m_problem, m_out);
+    m_specs = SpecManager::makeSpecManager(config, *m_problem, m_out);
     assert(m_specs);
 
     // we initialize the object used to compute score and partition.
-    m_hVar = ScoringMethod::makeScoringMethod(vm, *m_specs, *m_solver, m_out);
+    m_hVar = ScoringMethod::makeScoringMethod(config, *m_specs, *m_solver, m_out);
     m_hPhase =
-        PhaseHeuristic::makePhaseHeuristic(vm, *m_specs, *m_solver, m_out);
+        PhaseHeuristic::makePhaseHeuristic(config, *m_specs, *m_solver, m_out);
 
     // specify which variables are decisions, and which are not.
     m_redirectionPos.clear();
@@ -146,15 +145,15 @@ public:
 
     // no partitioning heuristic for the moment.
     assert(m_hVar && m_hPhase);
-    m_cacheInd = CacheManager<T>::makeCacheManager(vm, m_problem->getNbVar(),
+    m_cacheInd = CacheManager<T>::makeCacheManager(config, m_problem->getNbVar(),
                                                    m_specs, m_out);
     m_cacheMax = CacheManager<MinSharpSatResult>::makeCacheManager(
-        vm, m_problem->getNbVar(), m_specs, m_out);
+            config, m_problem->getNbVar(), m_specs, m_out);
 
     // init the clock time.
     initTimer();
 
-    m_optCached = vm["cache-activated"].as<bool>();
+    m_optCached = config.cache_activated;
     m_nbDecisionNode = m_nbSplit = m_nbCallCall = 0;
 
     m_stampIdx = 0;
@@ -611,9 +610,9 @@ public:
    * where the variables not belonging to m_problem->getIndVar() are
    * existantially quatified.
    *
-   * @param[in] vm, the set of options.
+   * @param[in] config, the configuration.
    */
-  void run(po::variables_map &vm) {
+  void run(Config &config) {
     std::vector<Var> setOfVar;
     for (int i = 1; i <= m_specs->getNbVariable(); i++)
       setOfVar.push_back(i);

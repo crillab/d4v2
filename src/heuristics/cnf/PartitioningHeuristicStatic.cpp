@@ -27,16 +27,16 @@ namespace d4 {
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
 */
-PartitioningHeuristicStatic::PartitioningHeuristicStatic(po::variables_map &vm,
+PartitioningHeuristicStatic::PartitioningHeuristicStatic(Config &config,
                                                          WrapperSolver &s,
                                                          SpecManager &om,
                                                          std::ostream &out)
     : PartitioningHeuristicStatic(
-          vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
+          config, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 }  // constructor
@@ -44,7 +44,7 @@ PartitioningHeuristicStatic::PartitioningHeuristicStatic(po::variables_map &vm,
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
    @param[in] nbClause, the number of clauses.
@@ -52,7 +52,7 @@ PartitioningHeuristicStatic::PartitioningHeuristicStatic(po::variables_map &vm,
    @param[in] sumSize, which give the number of literals.
 */
 PartitioningHeuristicStatic::PartitioningHeuristicStatic(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+        Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
     int nbVar, int sumSize, std::ostream &out)
     : m_s(s), m_om(dynamic_cast<SpecManagerCnf &>(om)) {
   m_nbVar = nbVar;
@@ -61,10 +61,8 @@ PartitioningHeuristicStatic::PartitioningHeuristicStatic(
   m_em.initEquivExtractor(m_nbVar + 1);
 
   // get the options.
-  m_reduceFormula =
-      vm["partitioning-heuristic-simplification-hyperedge"].as<bool>();
-  m_equivSimp =
-      vm["partitioning-heuristic-simplification-equivalence"].as<bool>();
+  m_reduceFormula = config.partitioning_heuristic_simplification_hyperedge;
+  m_equivSimp = config.partitioning_heuristic_simplification_equivalence;
 
   m_isInitialized = false;
   m_pm = NULL;
@@ -80,7 +78,7 @@ PartitioningHeuristicStatic::~PartitioningHeuristicStatic() {
 /**
    Generate a static partitioner regarding the given option list.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper to a solver.
    @param[in] om, a formula manager.
    @param[in] nbClause, the number of clauses of the formula.
@@ -92,24 +90,21 @@ PartitioningHeuristicStatic::~PartitioningHeuristicStatic() {
  */
 PartitioningHeuristicStatic *
 PartitioningHeuristicStatic::makePartitioningHeuristicStatic(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+        Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
     int nbVar, int sumSize, const std::string &type, std::ostream &out) {
-  std::string opt =
-      vm["partitioning-heuristic-bipartite-phase"].as<std::string>();
-
   PartitioningHeuristicStatic *ret = NULL;
 
-  if (opt == "none")
-    ret = new PartitioningHeuristicStaticNone(vm, s, om, nbClause, nbVar,
+  if (config.partitioning_heuristic_bipartite_phase == "none")
+    ret = new PartitioningHeuristicStaticNone(config, s, om, nbClause, nbVar,
                                               sumSize, out);
-  else if (opt == "multi")
-    ret = new PartitioningHeuristicStaticMulti(vm, s, om, nbClause, nbVar,
+  else if (config.partitioning_heuristic_bipartite_phase == "multi")
+    ret = new PartitioningHeuristicStaticMulti(config, s, om, nbClause, nbVar,
                                                sumSize, out);
-  else if (opt == "dual" || (opt == "natural" && type == "dual"))
-    ret = new PartitioningHeuristicStaticSingleDual(vm, s, om, nbClause, nbVar,
+  else if (config.partitioning_heuristic_bipartite_phase == "dual" || (config.partitioning_heuristic_bipartite_phase == "natural" && type == "dual"))
+    ret = new PartitioningHeuristicStaticSingleDual(config, s, om, nbClause, nbVar,
                                                     sumSize, out);
-  else if (opt == "primal" || (opt == "natural" && type == "primal"))
-    ret = new PartitioningHeuristicStaticSinglePrimal(vm, s, om, nbClause,
+  else if (config.partitioning_heuristic_bipartite_phase == "primal" || (config.partitioning_heuristic_bipartite_phase == "natural" && type == "primal"))
+    ret = new PartitioningHeuristicStaticSinglePrimal(config, s, om, nbClause,
                                                       nbVar, sumSize, out);
   else
     throw(FactoryException("Cannot create a PartitioningHeuristic", __FILE__,

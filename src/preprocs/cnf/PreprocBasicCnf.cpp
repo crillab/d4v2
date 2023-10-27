@@ -25,10 +25,10 @@ namespace d4 {
 /**
    The constructor.
 
-   @param[in] vm, the options used (solver).
+   @param[in] config, the configuration.
  */
-PreprocBasicCnf::PreprocBasicCnf(po::variables_map &vm, std::ostream &out) {
-  ws = WrapperSolver::makeWrapperSolverPreproc(vm, out);
+PreprocBasicCnf::PreprocBasicCnf(Config &config, std::ostream &out) {
+  ws = WrapperSolver::makeWrapperSolverPreproc(config, out);
 }  // constructor
 
 /**

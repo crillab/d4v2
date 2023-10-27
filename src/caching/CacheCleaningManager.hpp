@@ -17,18 +17,16 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
-
 #include "CacheCleaningExpectation.hpp"
 #include "CacheCleaningNone.hpp"
 #include "CacheManager.hpp"
 #include "CachedBucket.hpp"
+#include "src/config/Config.hpp"
 #include "src/exceptions/FactoryException.hpp"
 
 namespace d4 {
 template <class T>
 class CacheList;
-namespace po = boost::program_options;
 
 template <class T>
 class CacheCleaningManager {
@@ -41,26 +39,21 @@ class CacheCleaningManager {
   /**
      Create an operator to manage the cache reduction process.
 
-     @param[in] vm, the option list.
+     @param[in] config, the configuration.s
      @param[in] cache, the cache where we want to clean.
      @param[in] nbVar, the number of variables in the problem.
      @param[in] out, the stream where are print out the information.
    */
   static CacheCleaningManager<T> *makeCacheCleaningManager(
-      po::variables_map &vm, CacheManager<T> *cache, int nbVar,
+      Config &config, CacheManager<T> *cache, int nbVar,
       std::ostream &out) {
-    std::string crs = vm["cache-reduction-strategy"].as<std::string>();
+    out << "c [CONSTRUCTOR] Cache cleaning manager: " << config.cache_reduction_strategy << "\n";
 
-    if (crs == "expectation") {
-      out << "c [CONSTRUCTOR] Cache cleaning manager: " << crs << "\n";
+    if (config.cache_reduction_strategy == "expectation") {
       return new CacheCleaningExpectation<T>(cache, nbVar);
     } else {
-      out << "c [CONSTRUCTOR] Cache cleaning manager: " << crs << "\n";
       return new CacheCleaningNone<T>(cache);
     }
-
-    throw(FactoryException("Cannot create a CacheCleaningManager", __FILE__,
-                           __LINE__));
   }  // makeCacheCleaningManager
 
   virtual void initCountCachedBucket(CachedBucket<T> *cb) = 0;

@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -30,8 +29,6 @@
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
-
 template <class T>
 class ProjMCMethod : public MethodManager {
  private:
@@ -81,9 +78,9 @@ class ProjMCMethod : public MethodManager {
   /**
      Constructor.
 
-     @param[in] vm, the list of options.
+     @param[in] config, the configuration.
    */
-  ProjMCMethod(po::variables_map &vm, bool isFloat, ProblemManager *initProblem,
+  ProjMCMethod(Config &config, bool isFloat, ProblemManager *initProblem,
                LastBreathPreproc &lastBreath)
       : m_problem(initProblem), m_out(nullptr), m_outCounter(nullptr) {
     m_nbCallRec = m_nbSplit = 0;
@@ -99,7 +96,7 @@ class ProjMCMethod : public MethodManager {
     m_isSelector.resize(m_problem->getNbVar() + 1, false);
     for (auto v : m_problem->getSelectedVar()) m_isProjectedVar[v] = true;
 
-    m_refinement = vm["projMC-refinement"].as<bool>();
+    m_refinement = config.projMC_refinement;
     m_out << "c [CONSTRUCTOR] ProjMCMethod: refinement(" << m_refinement
           << ")\n";
 
@@ -114,10 +111,10 @@ class ProjMCMethod : public MethodManager {
     // prepare the SAT solver.
     std::vector<std::vector<Lit>> satSolverClauses = projClause;
     for (auto &cl : nprojClause) satSolverClauses.push_back(cl);
-    initSatSolver(vm, m_problem, satSolverClauses, idxVar - 1);
+    initSatSolver(config, m_problem, satSolverClauses, idxVar - 1);
 
     // prepare the cache.
-    m_cache = CacheManager<T>::makeCacheManager(vm, idxVar - 1, m_specs, m_out);
+    m_cache = CacheManager<T>::makeCacheManager(config, idxVar - 1, m_specs, m_out);
 
     // init the clock time.
     initTimer();
@@ -126,7 +123,7 @@ class ProjMCMethod : public MethodManager {
     m_lastBreath.fitSizeCountConflict(idxVar);
 
     // prepare the counter.
-    initCounter(vm, m_problem, isFloat, projClause, idxVar - 1);
+    initCounter(config, m_problem, isFloat, projClause, idxVar - 1);
     m_marked.resize(idxVar + 1, -1);
     m_flag.resize((idxVar + 1) << 1, false);
   }  // constructor
@@ -146,16 +143,15 @@ class ProjMCMethod : public MethodManager {
   /**
      Init the counter with the projected clauses.
 
-     @param[in] vm, the option to create the SAT solver.
+     @param[in] config, the configuration.
      @param[in] problem, the input problem (only used to get information about
      weight).
      @param[in] isFloat, specify if the weight are float or int.
      @param[in] clauses, the set of clauses.
      @param[in] nbVar, the number of variables of the formula.
    */
-  void initCounter(po::variables_map &vm, ProblemManager *problem, bool isFloat,
+  void initCounter(Config &config, ProblemManager *problem, bool isFloat,
                    std::vector<std::vector<Lit>> &clauses, unsigned nbVar) {
-    int precision = vm["float-precision"].as<int>();
 #if DEBUG
     m_outCounter.copyfmt(m_out);
     m_outCounter.clear(m_out.rdstate());
@@ -188,7 +184,7 @@ class ProjMCMethod : public MethodManager {
     m_out << "c [CONSTRUCTOR] Create an external counter: "
           << "counting"
           << "\n";
-    m_counter = Counter<T>::makeCounter(vm, p, "counting", isFloat, precision,
+    m_counter = Counter<T>::makeCounter(config, p, "counting", isFloat, config.float_precision,
                                         m_outCounter, m_lastBreath);
   }  // initCounter
 
@@ -196,15 +192,15 @@ class ProjMCMethod : public MethodManager {
      Init the SAT solver with a set of clauses (actually two sets).  Only deals
      with CNF formula.
 
-     @param[in] vm, the option to create the SAT solver.
+     @param[in] config, the configuration.
      @param[in] problem, the input problem (only used to get information about
      weight).
      @param[in] clauses, the set of clauses.
      @param[in] nbVar, the number of variables of the formula.
    */
-  void initSatSolver(po::variables_map &vm, ProblemManager *problem,
+  void initSatSolver(Config &config, ProblemManager *problem,
                      std::vector<std::vector<Lit>> &clauses, unsigned nbVar) {
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(config, m_out);
     assert(m_solver);
 
     // prepare the weight vectors and init the problem.
@@ -229,7 +225,7 @@ class ProjMCMethod : public MethodManager {
     m_solver->setNeedModel(true);
 
     // prepare the spec manager.
-    m_specs = SpecManager::makeSpecManager(vm, p, m_out);
+    m_specs = SpecManager::makeSpecManager(config, p, m_out);
   }  // initSatSolver
 
   /**
@@ -669,9 +665,9 @@ class ProjMCMethod : public MethodManager {
   /**
      Run the DPLL style algorithm with the operation manager.
 
-     @param[in] vm, the set of options.
+     @param[in] config, the configuration.
    */
-  void run(po::variables_map &vm) {
+  void run(Config &config) {
     T res = compute(m_out);
     printFinalStats(m_out);
     std::cout << "s " << res << "\n";

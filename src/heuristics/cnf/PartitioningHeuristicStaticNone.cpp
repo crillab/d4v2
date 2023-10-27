@@ -22,14 +22,14 @@ namespace d4 {
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
  */
 PartitioningHeuristicStaticNone::PartitioningHeuristicStaticNone(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, std::ostream &out)
+    Config &config, WrapperSolver &s, SpecManager &om, std::ostream &out)
     : PartitioningHeuristicStaticNone(
-          vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
+          config, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
@@ -38,7 +38,7 @@ PartitioningHeuristicStaticNone::PartitioningHeuristicStaticNone(
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
    @param[in] nbClause, the number of clauses.
@@ -46,9 +46,9 @@ PartitioningHeuristicStaticNone::PartitioningHeuristicStaticNone(
    @param[in] sumSize, which give the number of literals.
  */
 PartitioningHeuristicStaticNone::PartitioningHeuristicStaticNone(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+    Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
     int nbVar, int sumSize, std::ostream &out)
-    : PartitioningHeuristicStatic(vm, s, om, nbClause, nbVar, sumSize, out) {
+    : PartitioningHeuristicStatic(config, s, om, nbClause, nbVar, sumSize, out) {
   out << "c [CONSTRUCTOR] Static partitioner: none\n";
 
   m_isInitialized = true;

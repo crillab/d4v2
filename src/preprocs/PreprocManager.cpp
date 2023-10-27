@@ -26,18 +26,15 @@ namespace d4 {
 /**
    Create the preproc manager.
 
-   @param[in] vm, the option for the preprocessing.
+   @param[in] config, the configuration.
  */
-PreprocManager *PreprocManager::makePreprocManager(po::variables_map &vm,
+PreprocManager *PreprocManager::makePreprocManager(Config &config,
                                                    std::ostream &out) {
-  std::string meth = vm["preproc"].as<std::string>();
-  std::string inputType = vm["input-type"].as<std::string>();
+  out << "c [CONSTRUCTOR] Preproc: " << config.method << " " << config.input_type << "\n";
 
-  out << "c [CONSTRUCTOR] Preproc: " << meth << " " << inputType << "\n";
-
-  if (inputType == "cnf" || inputType == "dimacs") {
-    if (meth == "basic") return new PreprocBasicCnf(vm, out);
-    if (meth == "backbone") return new PreprocBackboneCnf(vm, out);
+  if (config.input_type == "cnf" || config.input_type == "dimacs") {
+    if (config.preproc == "basic") return new PreprocBasicCnf(config, out);
+    if (config.preproc == "backbone") return new PreprocBackboneCnf(config, out);
   }
 
   throw(FactoryException("Cannot create a PreprocManager", __FILE__, __LINE__));

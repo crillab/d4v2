@@ -16,12 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
 #include <ostream>
 
 #include "PartitioningHeuristicStatic.hpp"
 #include "PartitioningHeuristicStaticSingleDual.hpp"
 #include "PartitioningHeuristicStaticSinglePrimal.hpp"
 #include "PhaseSelectorManager.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
 class PhaseSelectorManager;
@@ -41,10 +43,10 @@ class PartitioningHeuristicStaticMulti : public PartitioningHeuristicStatic {
                             std::vector<std::vector<Var>> &equivVar);
 
  public:
-  PartitioningHeuristicStaticMulti(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStaticMulti(Config &config, WrapperSolver &s,
                                    SpecManager &om, std::ostream &out);
 
-  PartitioningHeuristicStaticMulti(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStaticMulti(Config &config, WrapperSolver &s,
                                    SpecManager &om, int nbClause, int nbVar,
                                    int sumSize, std::ostream &out);
 

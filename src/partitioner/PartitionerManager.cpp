@@ -23,14 +23,9 @@ namespace d4 {
 
 /**
    Create a partitioner.
-
-   @param[in] vm, the list of options.
-   @param[in] s, a view on the problem's structure.
-
-   \return a partioner if the options are ocrrect, NULL otherwise.
+   \return a partitioner if the options are correct, NULL otherwise.
  */
-PartitionerManager *PartitionerManager::makePartitioner(po::variables_map &vm,
-                                                        unsigned maxNodes,
+PartitionerManager *PartitionerManager::makePartitioner(unsigned maxNodes,
                                                         unsigned maxEdges,
                                                         unsigned maxSumEdgeSize,
                                                         std::ostream &out) {

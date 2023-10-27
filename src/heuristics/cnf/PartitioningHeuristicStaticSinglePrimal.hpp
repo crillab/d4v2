@@ -20,6 +20,7 @@
 #include <ostream>
 
 #include "PartitioningHeuristicStaticSingle.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
 class PartitioningHeuristicStaticSinglePrimal
@@ -38,11 +39,11 @@ class PartitioningHeuristicStaticSinglePrimal
       std::vector<int> &mapping, unsigned level);
 
  public:
-  PartitioningHeuristicStaticSinglePrimal(po::variables_map &vm,
+  PartitioningHeuristicStaticSinglePrimal(Config &config,
                                           WrapperSolver &s, SpecManager &om,
                                           std::ostream &out);
 
-  PartitioningHeuristicStaticSinglePrimal(po::variables_map &vm,
+  PartitioningHeuristicStaticSinglePrimal(Config &config,
                                           WrapperSolver &s, SpecManager &om,
                                           int nbClause, int nbVar, int sumSize,
                                           std::ostream &out);

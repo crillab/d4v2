@@ -17,12 +17,11 @@
  */
 #include <signal.h>
 
-#include <boost/multiprecision/gmp.hpp>
 #include <boost/program_options.hpp>
-#include <cassert>
 #include <iostream>
 #include <vector>
 
+#include "src/config/ConfigConverter.hpp"
 #include "src/methods/MethodManager.hpp"
 
 #ifndef NOMAIN
@@ -70,8 +69,9 @@ int main(int argc, char **argv) {
     exit(!vm.count("help"));
   }
 
-  methodRun = d4::MethodManager::makeMethodManager(vm, std::cout);
-  methodRun->run(vm);
+  d4::Config config = d4::ConfigConverter::fromVariablesMap(vm);
+  methodRun = d4::MethodManager::makeMethodManager(config, std::cout);
+  methodRun->run(config);
   delete methodRun;
   methodRun = nullptr;
 

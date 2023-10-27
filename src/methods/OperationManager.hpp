@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+
 #include <boost/multiprecision/gmp.hpp>
-#include <boost/program_options.hpp>
 
 #include "CountingOperation.hpp"
 #include "DataBranch.hpp"
@@ -25,17 +25,16 @@
 #include "nnf/Branch.hpp"
 #include "nnf/Node.hpp"
 #include "nnf/NodeManager.hpp"
+#include "src/config/Config.hpp"
 #include "src/exceptions/FactoryException.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 template <class T, class U>
 class Operation {
  public:
   /**
      Operation factory.
 
-     @param[in] vm, the option list.
      @param[in] problem, the problem description.
      @param[in] specs, the problem specification.
      @param[in] solver, the SAT solver used for the compiler.
@@ -62,7 +61,7 @@ class Operation {
 
   virtual U createTop() = 0;
   virtual U createBottom() = 0;
-  virtual void manageResult(U &result, po::variables_map &vm,
+  virtual void manageResult(U &result, Config &config,
                             std::ostream &out) = 0;
   virtual U manageBottom() = 0;
   virtual U manageTop(std::vector<Var> &component) = 0;

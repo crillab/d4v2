@@ -132,24 +132,23 @@ class DecisionDNNFOperation : public Operation<T, U> {
      Manage the final result compute.
 
      @param[in] result, the result we are considering.
-     @param[in] vm, a set of options that describes what we want to do on the
+     @param[in] config, the configuration.
      given result.
      @param[in] out, the output stream.
   */
-  void manageResult(U &result, po::variables_map &vm, std::ostream &out) {
-    if (vm.count("dump-ddnnf")) {
+  void manageResult(U &result, Config &config, std::ostream &out) {
+    if (!config.dump_ddnnf.empty()) {
       std::ofstream outFile;
-      std::string fileName = vm["dump-ddnnf"].as<std::string>();
+      std::string fileName = config.dump_ddnnf;
       outFile.open(fileName);
       m_nodeManager->printNNF(result, outFile);
       outFile.close();
-    } else if (vm.count("query")) {
+    } else if (!config.query.empty()) {
       std::vector<Lit> query;
       std::vector<ValueVar> fixedValue(m_problem->getNbVar() + 1,
                                        ValueVar::isNotAssigned);
 
-      std::string fileName = vm["query"].as<std::string>();
-      QueryManager queryManager(fileName);
+      QueryManager queryManager(config.query);
       TypeQuery typeQuery = TypeQuery::QueryEnd;
 
       do {

@@ -19,20 +19,21 @@
 
 #include <ostream>
 
+#include "src/config/Config.hpp"
 #include "src/utils/AtMost1Extractor.hpp"
 
 namespace d4 {
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
 */
 PartitioningHeuristicStaticSingle::PartitioningHeuristicStaticSingle(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, std::ostream &out)
+    Config &config, WrapperSolver &s, SpecManager &om, std::ostream &out)
     : PartitioningHeuristicStaticSingle(
-          vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
+          config, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
@@ -41,7 +42,7 @@ PartitioningHeuristicStaticSingle::PartitioningHeuristicStaticSingle(
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
    @param[in] nbClause, the number of clauses.
@@ -49,13 +50,13 @@ PartitioningHeuristicStaticSingle::PartitioningHeuristicStaticSingle(
    @param[in] sumSize, which give the number of literals.
  */
 PartitioningHeuristicStaticSingle::PartitioningHeuristicStaticSingle(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+    Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
     int nbVar, int sumSize, std::ostream &out)
-    : PartitioningHeuristicStatic(vm, s, om, nbClause, nbVar, sumSize, out) {
+    : PartitioningHeuristicStatic(config, s, om, nbClause, nbVar, sumSize, out) {
   m_bucketNumber.resize(m_nbVar + 2, 0);
   m_hypergraphExtractor = NULL;
   m_phaseSelector =
-      PhaseSelectorManager::makePhaseSelectorManager(vm, this, out);
+      PhaseSelectorManager::makePhaseSelectorManager(config, this, out);
   m_equivClass.resize(m_nbVar + 1, 0);
   m_levelDistribution.resize(m_nbVar + 1, 0);
   m_markedVar.resize(m_nbVar + 1, 0);

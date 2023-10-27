@@ -41,8 +41,8 @@ namespace d4 {
     config.phase_heuristic_reversed = false;
     config.float_precision = 128;
     config.isFloat = false;
-    // dump_ddnnf is empty
-    // query is empty
+    config.dump_ddnnf = "";
+    config.query = "";
     config.projMC_refinement = false;
     config.keyword_output_format_solution = "s";
     config.output_format = "classic";

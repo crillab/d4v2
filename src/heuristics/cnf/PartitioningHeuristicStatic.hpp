@@ -17,12 +17,12 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <cstdint>
 #include <ostream>
 #include <vector>
 
 #include "../PartitioningHeuristic.hpp"
+#include "src/config/Config.hpp"
 #include "src/hyperGraph/HyperGraphExtractor.hpp"
 #include "src/partitioner/PartitionerManager.hpp"
 #include "src/solvers/WrapperSolver.hpp"
@@ -30,7 +30,6 @@
 #include "src/utils/EquivExtractor.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 class PartitioningHeuristicStatic : public PartitioningHeuristic {
  protected:
   WrapperSolver &m_s;
@@ -51,10 +50,10 @@ class PartitioningHeuristicStatic : public PartitioningHeuristic {
   virtual void init(std::ostream &out) = 0;
 
  protected:
-  PartitioningHeuristicStatic(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStatic(Config &config, WrapperSolver &s,
                               SpecManager &om, std::ostream &out);
 
-  PartitioningHeuristicStatic(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStatic(Config &config, WrapperSolver &s,
                               SpecManager &om, int nbClause, int nbVar,
                               int sumSize, std::ostream &out);
 
@@ -62,7 +61,7 @@ class PartitioningHeuristicStatic : public PartitioningHeuristic {
   virtual ~PartitioningHeuristicStatic();
 
   static PartitioningHeuristicStatic *makePartitioningHeuristicStatic(
-      po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+          Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
       int nbVar, int sumSize, const std::string &type, std::ostream &out);
 
   virtual void computeCutSet(std::vector<Var> &component,

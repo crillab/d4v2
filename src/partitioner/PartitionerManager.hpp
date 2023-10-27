@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <boost/program_options.hpp>
+
 #include <functional>
 #include <vector>
 
@@ -24,13 +24,11 @@
 
 namespace d4 {
 
-namespace po = boost::program_options;
 class PartitionerManager {
  public:
   enum Level { NORMAL, SPEED, QUALITY };
 
-  static PartitionerManager *makePartitioner(po::variables_map &vm,
-                                             unsigned maxNodes,
+  static PartitionerManager *makePartitioner(unsigned maxNodes,
                                              unsigned maxEdges,
                                              unsigned maxSumEdgeSize,
                                              std::ostream &out);

@@ -17,18 +17,17 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <vector>
 
 #include "BucketManager.hpp"
 #include "CacheCleaningManager.hpp"
 #include "CachedBucket.hpp"
 #include "src/caching/cnf/BucketManagerCnf.hpp"
+#include "src/config/Config.hpp"
 #include "src/hashing/HashString.hpp"
 #include "src/specs/SpecManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 template <class T>
 class CacheList : public CacheManager<T> {
  private:
@@ -39,14 +38,14 @@ class CacheList : public CacheManager<T> {
   /**
    * @brief Construct a new Cache List object
    *
-   * @param vm is a map to get the option.
+   * @param config is the configuration.
    * @param nbVar is the number of variables.
    * @param specs is a structure to get data about the formula.
    * @param out is the stream where are printed out the logs.
    */
-  CacheList(po::variables_map &vm, unsigned nbVar, SpecManager *specs,
+  CacheList(Config &config, unsigned nbVar, SpecManager *specs,
             std::ostream &out)
-      : CacheManager<T>(vm, nbVar, specs, out) {
+      : CacheManager<T>(config, nbVar, specs, out) {
     out << "c [CACHE LIST CONSTRUCTOR]\n";
     initHashTable(nbVar);
   }  // constructor

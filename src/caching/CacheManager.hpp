@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <functional>
 #include <vector>
 
@@ -27,13 +26,12 @@
 #include "CacheNoCollision.hpp"
 #include "CachedBucket.hpp"
 #include "TmpEntry.hpp"
+#include "src/config/Config.hpp"
 #include "src/exceptions/FactoryException.hpp"
 #include "src/hashing/HashString.hpp"
 #include "src/specs/SpecManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
-
 template <class T>
 class CacheCleaningManager;
 template <class T>
@@ -70,12 +68,12 @@ class CacheManager {
   /**
    * @brief Construct a new Cache Manager object
    *
-   * @param vm is a map to get the option.
+   * @param config is the configuration.
    * @param nbVar is the number of variables.
    * @param specs is a structure to get data about the formula.
    * @param out is the stream where are printed out the logs.
    */
-  CacheManager(po::variables_map &vm, unsigned nbVar, SpecManager *specs,
+  CacheManager(Config &config, unsigned nbVar, SpecManager *specs,
                std::ostream &out)
       : m_out(nullptr) {
     m_out.copyfmt(out);
@@ -87,9 +85,9 @@ class CacheManager {
     m_limitVarCached = (nbVar < MAX_NBVAR_CACHED) ? nbVar : MAX_NBVAR_CACHED;
 
     m_cacheCleaningManager =
-        CacheCleaningManager<T>::makeCacheCleaningManager(vm, this, nbVar, out);
+        CacheCleaningManager<T>::makeCacheCleaningManager(config, this, nbVar, out);
     m_bucketManager =
-        BucketManager<T>::makeBucketManager(vm, this, *specs, out);
+        BucketManager<T>::makeBucketManager(config, this, *specs, out);
   }  // constructor
 
   /**
@@ -103,21 +101,20 @@ class CacheManager {
   /**
    * @brief Factory.
    *
-   * @param vm are the options.
+   * @param config is the configuration.
    * @param nbVar is the number of variables.
    * @param specs gives the information about the input formula.
    * @param out is the stream where are printed out the logs.
    * @return CacheManager<T>*
    */
-  static CacheManager<T> *makeCacheManager(po::variables_map &vm,
+  static CacheManager<T> *makeCacheManager(Config &config,
                                            unsigned nbVar, SpecManager *specs,
                                            std::ostream &out) {
-    std::string method = vm["cache-method"].as<std::string>();
-    out << "c [CACHE] Cache method used: " << method << "\n";
+    out << "c [CACHE] Cache method used: " << config.cache_method << "\n";
 
-    if (method == "no-collision")
-      return new CacheNoCollision<T>(vm, nbVar, specs, out);
-    if (method == "list") return new CacheList<T>(vm, nbVar, specs, out);
+    if (config.cache_method == "no-collision")
+      return new CacheNoCollision<T>(config, nbVar, specs, out);
+    if (config.cache_method == "list") return new CacheList<T>(config, nbVar, specs, out);
 
     throw(
         FactoryException("Cannot create a ProblemManager", __FILE__, __LINE__));

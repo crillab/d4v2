@@ -27,18 +27,15 @@ namespace d4 {
    Wrapper to get a solver able to solve the input problem for the
    compilation/counting problems.
 
-   @param[in] vm, the options.
+   @param[in] config, the configuration.
  */
-WrapperSolver *WrapperSolver::makeWrapperSolver(po::variables_map &vm,
+WrapperSolver *WrapperSolver::makeWrapperSolver(Config &config,
                                                 std::ostream &out) {
-  std::string s = vm["solver"].as<std::string>();
-  std::string inType = vm["input-type"].as<std::string>();
+  out << "c [CONSTRUCTOR] Solver: " << config.solver << " " << config.input_type << "\n";
 
-  out << "c [CONSTRUCTOR] Solver: " << s << " " << inType << "\n";
-
-  if (inType == "cnf" || inType == "dimacs") {
-    if (s == "minisat") return new WrapperMinisat();
-    if (s == "glucose") return new WrapperGlucose();
+  if (config.input_type == "cnf" || config.input_type == "dimacs") {
+    if (config.solver == "minisat") return new WrapperMinisat();
+    if (config.solver == "glucose") return new WrapperGlucose();
   }
 
   throw(FactoryException("Cannot create a WrapperSolver", __FILE__, __LINE__));
@@ -48,18 +45,15 @@ WrapperSolver *WrapperSolver::makeWrapperSolver(po::variables_map &vm,
    Wrapper to get a solver able to solve the input problem for the preprocessing
    step.
 
-   @param[in] vm, the options.
+   @param[in] config, the configuration.
  */
-WrapperSolver *WrapperSolver::makeWrapperSolverPreproc(po::variables_map &vm,
+WrapperSolver *WrapperSolver::makeWrapperSolverPreproc(Config &config,
                                                        std::ostream &out) {
-  std::string s = vm["preproc-solver"].as<std::string>();
-  std::string inType = vm["input-type"].as<std::string>();
+  out << "c [CONSTRUCTOR] Preproc solver: " << config.preproc_solver << " " << config.input_type << "\n";
 
-  out << "c [CONSTRUCTOR] Preproc solver: " << s << " " << inType << "\n";
-
-  if (inType == "cnf" || inType == "dimacs") {
-    if (s == "minisat") return new WrapperMinisat();
-    if (s == "glucose") return new WrapperGlucose();
+  if (config.input_type == "cnf" || config.input_type == "dimacs") {
+    if (config.preproc_solver == "minisat") return new WrapperMinisat();
+    if (config.preproc_solver == "glucose") return new WrapperGlucose();
   }
 
   throw(FactoryException("Cannot create a WrapperSolver", __FILE__, __LINE__));

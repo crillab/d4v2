@@ -21,6 +21,7 @@
 
 #include "PartitioningHeuristicStatic.hpp"
 #include "PhaseSelectorManager.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
 class PhaseSelectorManager;
@@ -106,10 +107,10 @@ class PartitioningHeuristicStaticSingle : public PartitioningHeuristicStatic {
   }
 
  public:
-  PartitioningHeuristicStaticSingle(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStaticSingle(Config &config, WrapperSolver &s,
                                     SpecManager &om, std::ostream &out);
 
-  PartitioningHeuristicStaticSingle(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStaticSingle(Config &config, WrapperSolver &s,
                                     SpecManager &om, int nbClause, int nbVar,
                                     int sumSize, std::ostream &out);
 

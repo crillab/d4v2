@@ -28,22 +28,19 @@ namespace d4 {
 /**
    Create a phase heuristic object able to select the value of a given variable.
 
-   @param[in] vm, the set of options.
+   @param[in] config, the configuration.
  */
-PhaseHeuristic *PhaseHeuristic::makePhaseHeuristic(po::variables_map &vm,
+PhaseHeuristic *PhaseHeuristic::makePhaseHeuristic(Config &config,
                                                    SpecManager &s,
                                                    PolarityManager &p,
                                                    std::ostream &out) {
-  std::string meth = vm["phase-heuristic"].as<std::string>();
-  bool rev = vm["phase-heuristic-reversed"].as<bool>();
+  out << "c [CONSTRUCTOR] Phase heuristic: " << config.phase_heuristic
+      << ((config.phase_heuristic_reversed) ? "(reversed)" : "") << "\n";
 
-  out << "c [CONSTRUCTOR] Phase heuristic: " << meth
-      << ((rev) ? "(reversed)" : "") << "\n";
-
-  if (meth == "false") return new PhaseHeuristicFalse(rev);
-  if (meth == "true") return new PhaseHeuristicTrue(rev);
-  if (meth == "polarity") return new PhaseHeuristicPolarity(p, rev);
-  if (meth == "occurrence") return new PhaseHeuristicOccurrence(s, rev);
+  if (config.phase_heuristic == "false") return new PhaseHeuristicFalse(config.phase_heuristic_reversed);
+  if (config.phase_heuristic == "true") return new PhaseHeuristicTrue(config.phase_heuristic_reversed);
+  if (config.phase_heuristic == "polarity") return new PhaseHeuristicPolarity(p, config.phase_heuristic_reversed);
+  if (config.phase_heuristic == "occurrence") return new PhaseHeuristicOccurrence(s, config.phase_heuristic_reversed);
 
   throw(FactoryException("Cannot create a PhaseHeuristic", __FILE__, __LINE__));
 }  // makePhaseHeuristic

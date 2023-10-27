@@ -17,9 +17,9 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <functional>
 #include <vector>
+#include <memory>
 
 #include "3rdParty/mt-kahypar/include/libmtkahypar.h"
 #include "PartitionerManager.hpp"

@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <boost/program_options.hpp>
+
 #include <vector>
 
+#include "src/config/Config.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 struct LastBreathPreproc {
   std::vector<double> countConflict;
   bool panic;
@@ -35,7 +35,7 @@ struct LastBreathPreproc {
 
 class PreprocManager {
  public:
-  static PreprocManager *makePreprocManager(po::variables_map &vm,
+  static PreprocManager *makePreprocManager(Config &config,
                                             std::ostream &out);
 
   virtual ~PreprocManager() {}
