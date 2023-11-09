@@ -13,7 +13,7 @@ if(NOT BUILD_SHARED_LIBS)
     set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost COMPONENTS program_options REQUIRED)
+find_package(Boost REQUIRED)
 
 set(_gmp_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
@@ -147,11 +147,16 @@ add_executable(d4 src/Main.cpp)
 target_link_libraries(d4 core)
 install(TARGETS d4 DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-add_library(ddnnf_compiler src/DdnnfCompiler.cpp)
-target_link_libraries(ddnnf_compiler core)
-target_include_directories(ddnnf_compiler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set_target_properties(ddnnf_compiler PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/DdnnfCompiler.hpp)
-install(TARGETS ddnnf_compiler
+add_library(ddnnf_compiler_lib src/DdnnfCompiler.cpp)
+target_link_libraries(ddnnf_compiler_lib core)
+target_include_directories(ddnnf_compiler_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set_target_properties(ddnnf_compiler_lib PROPERTIES OUTPUT_NAME "ddnnf_compiler")
+set_target_properties(ddnnf_compiler_lib PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/DdnnfCompiler.hpp)
+install(TARGETS ddnnf_compiler_lib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+add_executable(ddnnf_compiler src/DdnnfCompilerRunnable.cpp)
+target_link_libraries(ddnnf_compiler ddnnf_compiler_lib)
+install(TARGETS ddnnf_compiler DESTINATION ${CMAKE_INSTALL_BINDIR})
