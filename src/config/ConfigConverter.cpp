@@ -18,8 +18,6 @@ namespace d4 {
     config.maxsharpsat_heuristic_phase_random = vm["maxsharpsat-heuristic-phase-random"].as<unsigned>();
     config.maxsharpsat_option_and_dig = vm["maxsharpsat-option-and-dig"].as<bool>();
     config.maxsharpsat_option_greedy_init = vm["maxsharpsat-option-greedy-init"].as<bool>();
-    config.solver = vm["solver"].as<string>();
-    config.preproc_solver = vm["preproc-solver"].as<string>();
     config.preproc = vm["preproc"].as<string>();
     config.scoring_method = vm["scoring-method"].as<string>();
     config.occurrence_manager = vm["occurrence-manager"].as<string>();

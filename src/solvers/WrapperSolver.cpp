@@ -18,7 +18,10 @@
 
 #include "WrapperSolver.hpp"
 
+#ifdef USE_GLUCOSE
 #include "cnf/WrapperGlucose.hpp"
+#endif
+
 #include "cnf/WrapperMinisat.hpp"
 #include "src/exceptions/FactoryException.hpp"
 
@@ -31,11 +34,14 @@ namespace d4 {
  */
 WrapperSolver *WrapperSolver::makeWrapperSolver(Config &config,
                                                 std::ostream &out) {
-  out << "c [CONSTRUCTOR] Solver: " << config.solver << " " << config.input_type << "\n";
-
   if (config.input_type == "cnf" || config.input_type == "dimacs") {
-    if (config.solver == "minisat") return new WrapperMinisat();
-    if (config.solver == "glucose") return new WrapperGlucose();
+    #if D4_SOLVER == minisat
+      out << "c [CONSTRUCTOR] Solver: minisat" << config.input_type << "\n";
+      return new WrapperMinisat();
+    #elif D4_SOLVER == glucose
+      out << "c [CONSTRUCTOR] Solver: glucose" << config.input_type << "\n";
+      return new WrapperGlucose();
+    #endif
   }
 
   throw(FactoryException("Cannot create a WrapperSolver", __FILE__, __LINE__));
@@ -49,11 +55,14 @@ WrapperSolver *WrapperSolver::makeWrapperSolver(Config &config,
  */
 WrapperSolver *WrapperSolver::makeWrapperSolverPreproc(Config &config,
                                                        std::ostream &out) {
-  out << "c [CONSTRUCTOR] Preproc solver: " << config.preproc_solver << " " << config.input_type << "\n";
-
   if (config.input_type == "cnf" || config.input_type == "dimacs") {
-    if (config.preproc_solver == "minisat") return new WrapperMinisat();
-    if (config.preproc_solver == "glucose") return new WrapperGlucose();
+    #if D4_PREPROC_SOLVER == minisat
+      out << "c [CONSTRUCTOR] Preproc solver: minisat" << config.input_type << "\n";
+      return new WrapperMinisat();
+    #elif D4_PREPROC_SOLVER == glucose
+      out << "c [CONSTRUCTOR] Preproc solver: glucose" << config.input_type << "\n";
+      return new WrapperGlucose();
+    #endif
   }
 
   throw(FactoryException("Cannot create a WrapperSolver", __FILE__, __LINE__));

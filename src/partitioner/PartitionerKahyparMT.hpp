@@ -21,7 +21,8 @@
 #include <vector>
 #include <memory>
 
-#include "3rdParty/mt-kahypar/include/libmtkahypar.h"
+#include "libmtkahypar.h"
+
 #include "PartitionerManager.hpp"
 
 namespace d4 {

@@ -8,8 +8,7 @@
  - [GMP][gmp] (with C++ bindings)
  - [Boost][boost]
  - [zlib][zlib]
- - [TBB][tbb]
- - [hwloc][hwloc]
+ - [Mt-KaHyPar][mtkahypar]
 
 ### Build
 
@@ -64,5 +63,4 @@ The library is statically built and depending on code must be linked against all
 [boost]: https://boost.org
 [zlib]: https://zlib.net
 [ninja]: https://github.com/ninja-build/ninja
-[tbb]: https://github.com/oneapi-src/oneTBB
-[hwloc]: https://www.open-mpi.org/projects/hwloc
+[mtkahypar]: https://github.com/kahypar/mt-kahypar

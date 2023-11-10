@@ -1,41 +1,42 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.27)
 
 project(D4 VERSION 2.0 LANGUAGES CXX)
 
-option(BUILD_SHARED_LIBS "Build shared libraries." OFF)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(GNUInstallDirs)
+include(Solver)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# FIXME: libmtkahypar currently can not be built statically (https://github.com/kahypar/mt-kahypar/pull/161)
+option(BUILD_SHARED_LIBS "Build shared libraries." ON)
+
 if(NOT BUILD_SHARED_LIBS)
+    set(GMP_USE_STATIC_LIBS ON)
     set(Boost_USE_STATIC_LIBS ON)
+    set(MtKaHyPar_USE_STATIC_LIBS ON)
+    set(glucose_USE_STATIC_LIBS ON)
 endif()
 
-find_package(Boost REQUIRED)
+find_package(GMP REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(MtKaHyPar REQUIRED)
 
-set(_gmp_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
-
-if(NOT BUILD_SHARED_LIBS)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a .lib)
+# glucose is only needed when requested, which it is not by default.
+if(USE_GLUCOSE)
+    find_package(glucose REQUIRED)
+    include_directories(${glucose_INCLUDE_DIR})
 endif()
-
-find_library(GMP_LIBRARY gmp REQUIRED)
-message(STATUS "Found GMP: ${GMP_LIBRARY}")
-
-find_library(GMPXX_LIBRARY gmpxx REQUIRED)
-message(STATUS "Found GMP C++: ${GMPXX_LIBRARY}")
-
-set(CMAKE_FIND_LIBRARY_SUFFIXES ${_gmp_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/mt-kahypar/include)
+include_directories(${GMP_INCLUDE_DIRS})
+include_directories(${GMPXX_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glucose-3.0 EXCLUDE_FROM_ALL)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/mt-kahypar EXCLUDE_FROM_ALL)
+include_directories(${MtKaHyPar_INCLUDE_DIR})
 
 add_library(caching OBJECT
     src/caching/BucketAllocator.cpp
@@ -110,10 +111,13 @@ add_library(problem OBJECT
 add_library(solvers OBJECT
     src/solvers/ActivityManager.cpp
     src/solvers/cnf/minisat/Solver.cpp
-    src/solvers/cnf/WrapperGlucose.cpp
     src/solvers/cnf/WrapperMinisat.cpp
     src/solvers/WrapperSolver.cpp
 )
+
+if(USE_GLUCOSE)
+    target_sources(solvers PRIVATE src/solvers/cnf/WrapperGlucose.cpp)
+endif()
 
 add_library(spec OBJECT
     src/specs/cnf/SpecManagerCnf.cpp
@@ -141,16 +145,20 @@ add_library(core STATIC
     $<TARGET_OBJECTS:utils>
 )
 
-target_link_libraries(core ${GMPXX_LIBRARY} ${GMP_LIBRARY} glucose mtkahypar)
+target_link_libraries(core GMP::GMPXX GMP::GMP MtKaHyPar::MtKaHyPar)
+
+if(USE_GLUCOSE)
+    target_link_libraries(core glucose::glucose)
+endif()
 
 add_executable(d4 src/Main.cpp)
-target_link_libraries(d4 core)
+target_link_libraries(d4 core Boost::program_options)
 install(TARGETS d4 DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_library(ddnnf_compiler_lib src/DdnnfCompiler.cpp)
 target_link_libraries(ddnnf_compiler_lib core)
 target_include_directories(ddnnf_compiler_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set_target_properties(ddnnf_compiler_lib PROPERTIES OUTPUT_NAME "ddnnf_compiler")
+set_target_properties(ddnnf_compiler_lib PROPERTIES OUTPUT_NAME ddnnf_compiler)
 set_target_properties(ddnnf_compiler_lib PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/DdnnfCompiler.hpp)
 install(TARGETS ddnnf_compiler_lib
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

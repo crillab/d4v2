@@ -10,38 +10,32 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu
+          - name: linux
+            runner: ubuntu
+            shell: bash
         compiler:
           - cc: gcc
             cxx: g++
           - cc: clang
             cxx: clang++
+        solver:
+          - minisat
+#          - glucose
         launcher:
           - sccache
-        shell:
-          - bash
-        binary:
-          - d4
         include:
-          - os: windows
+          - os: { name: windows, runner: windows, shell: msys2, msystem: ucrt64 }
             compiler: { cc: gcc, cxx: g++ }
+            solver: minisat
             launcher: ''
-            shell: msys2
-            binary: d4.exe
-            msystem: ucrt64
-#          - os: windows
-#            compiler: { cc: clang, cxx: clang++ }
-#            launcher: ''
-#            shell: msys2
-#            binary: d4.exe
-#            msystem: clang64
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os.runner }}-latest
     defaults:
       run:
-        shell: ${{ matrix.shell }} {0}
+        shell: ${{ matrix.os.shell }} {0}
     env:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
+#      CMAKE_BUILD_TYPE: Debug
       CMAKE_C_COMPILER_LAUNCHER: ${{ matrix.launcher }}
       CMAKE_CXX_COMPILER_LAUNCHER: ${{ matrix.launcher }}
       SCCACHE_GHA_ENABLED: true
@@ -51,15 +45,16 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Install dependencies
-        if: ${{ matrix.os == 'ubuntu' }}
+        if: ${{ matrix.os.runner == 'ubuntu' }}
         run: sudo apt install ninja-build libtbb-dev libhwloc-dev libboost-program-options-dev
       - name: Install dependencies
-        if: ${{ matrix.os == 'windows' }}
+        if: ${{ matrix.os.runner == 'windows' }}
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ${{ matrix.msystem }}
+          msystem: ${{ matrix.os.msystem }}
           update: true
           pacboy: >-
+            git
             toolchain:p
             cmake:p
             ninja:p
@@ -68,16 +63,49 @@ jobs:
             hwloc:p
             boost:p
       - name: Setup dependencies
-        if: ${{ matrix.os == 'windows' }}
-        run: mv /${{ matrix.msystem }}/lib/libtbb12.dll.a /${{ matrix.msystem }}/lib/libtbb.dll.a
+        if: ${{ matrix.os.runner == 'windows' }}
+        run: mv /${{ matrix.os.msystem }}/lib/libtbb12.dll.a /${{ matrix.os.msystem }}/lib/libtbb.dll.a
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Setup temporary directories
+        run: |
+          echo D4_ROOT=$(mktemp -d) >> $GITHUB_ENV
+          echo MtKaHyPar_ROOT=$(mktemp -d) >> $GITHUB_ENV
+          echo glucose_ROOT=$(mktemp -d) >> $GITHUB_ENV
+      - name: Build Mt-KaHyPar
+        run: |
+          cd $(mktemp -d)
+          git clone --recursive https://github.com/kahypar/mt-kahypar.git .
+          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
+          cmake -B build -G Ninja -DCMAKE_INSTALL_PREFIX=$MtKaHyPar_ROOT
+          cmake --build build --target mtkahypar
+          cmake --install build
+      - name: Build glucose
+        if: ${{ matrix.solver == 'glucose' }}
+        run: |
+          cd 3rdParty/glucose-3.0
+          cmake -B build -G Ninja -DCMAKE_INSTALL_PREFIX=$glucose_ROOT
+          cmake --build build
+          cmake --install build
       - name: Configure
-        run: cmake -DBUILD_SHARED_LIBS=true -B build -G Ninja
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DD4_SOLVER=${{ matrix.solver }} \
+            -DD4_PREPROC_SOLVER=${{ matrix.solver }} \
+            -DCMAKE_INSTALL_PREFIX=$D4_ROOT
       - name: Build
         run: cmake --build build
+      - name: Install
+        run: cmake --install build
+      - name: Package
+        run: |
+          mv $D4_ROOT d4-${{ matrix.os.name }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}
+          tar -cvf \
+            d4-${{ matrix.os.name }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}.tar \
+            d4-${{ matrix.os.name }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: d4-${{ matrix.os }}-${{ matrix.compiler.cc }}
-          path: build/${{ matrix.binary }}
+          name: d4-${{ matrix.os.name }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}
+          path: d4-${{ matrix.os.name }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}.tar

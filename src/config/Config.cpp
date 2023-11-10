@@ -12,8 +12,6 @@ namespace d4 {
     config.maxsharpsat_heuristic_phase_random = 5;
     config.maxsharpsat_option_and_dig = true;
     config.maxsharpsat_option_greedy_init = false;
-    config.solver = "minisat";
-    config.preproc_solver = "minisat";
     config.preproc = "basic";
     config.scoring_method = "vsads";
     config.occurrence_manager = "dynamic";

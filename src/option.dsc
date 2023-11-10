@@ -7,8 +7,6 @@
 ("maxsharpsat-heuristic-phase-random",boost::program_options::value<unsigned>()->default_value(5),"That is the percentage of random choice for the phase selection.")
 ("maxsharpsat-option-and-dig",boost::program_options::value<bool>()->default_value(true),"When a decomposable AND node occurs we search for an instantiation to be able to get a bound.")
 ("maxsharpsat-option-greedy-init",boost::program_options::value<bool>()->default_value(false),"Search for a first max interpretation greedily.")
-("solver,s", boost::program_options::value<std::string>()->default_value("minisat"), "The solver we will use")
-("preproc-solver,ps", boost::program_options::value<std::string>()->default_value("minisat"), "The solver we will use in the preproc")
 ("preproc,p",boost::program_options::value<std::string>()->default_value("basic"), "The preprocessing technique we will use (basic, backbone).")
 ("scoring-method,sm",boost::program_options::value<std::string>()->default_value("vsads"),"The scoring method used for selecting the next variable. [mom, dlcs, vsids, vsads, jwts]")
 ("occurrence-manager,om",boost::program_options::value<std::string>()->default_value("dynamic"),"The occurrence manager used. [add a description]")

@@ -23,9 +23,10 @@
 #include <vector>
 #include <cstdint>
 
-#include "3rdParty/glucose-3.0/core/Solver.h"
-#include "3rdParty/glucose-3.0/core/SolverTypes.h"
-#include "3rdParty/glucose-3.0/mtl/Vec.h"
+#include "glucose/core/Solver.h"
+#include "glucose/core/SolverTypes.h"
+#include "glucose/mtl/Vec.h"
+
 #include "src/problem/ProblemTypes.hpp"
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
 

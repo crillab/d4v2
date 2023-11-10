@@ -15,8 +15,6 @@ namespace d4 {
     unsigned maxsharpsat_heuristic_phase_random;
     bool maxsharpsat_option_and_dig;
     bool maxsharpsat_option_greedy_init;
-    string solver;
-    string preproc_solver;
     string preproc;
     string scoring_method;
     string occurrence_manager;
