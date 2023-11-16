@@ -13,18 +13,22 @@ jobs:
           - name: linux
             runner: ubuntu
             shell: bash
+          - name: windows
+            runner: windows
+            shell: msys2
         compiler:
           - cc: gcc
             cxx: g++
+            msystem: ucrt64
           - cc: clang
             cxx: clang++
+            msystem: clang64
         solver:
           - minisat
 #          - glucose
-        include:
-          - os: { name: windows, runner: windows, shell: msys2, msystem: ucrt64 }
-            compiler: { cc: gcc, cxx: g++ }
-            solver: minisat
+        exclude:
+          - os: { name: windows, runner: windows, shell: msys2 }
+            compiler: { cc: clang, cxx: clang++, msystem: clang64 }
     runs-on: ${{ matrix.os.runner }}-latest
     defaults:
       run:
@@ -32,7 +36,6 @@ jobs:
     env:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
-#      CMAKE_BUILD_TYPE: Debug
       CMAKE_GENERATOR: Ninja
       SCCACHE_GHA_ENABLED: true
     steps:
@@ -45,12 +48,12 @@ jobs:
         if: ${{ matrix.os.runner == 'windows' }}
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ${{ matrix.os.msystem }}
+          msystem: ${{ matrix.compiler.msystem }}
           update: true
           pacboy: git toolchain:p cmake:p ninja:p gmp:p tbb:p hwloc:p boost:p
       - name: Setup dependencies
         if: ${{ matrix.os.runner == 'windows' }}
-        run: mv /${{ matrix.os.msystem }}/lib/libtbb12.dll.a /${{ matrix.os.msystem }}/lib/libtbb.dll.a
+        run: mv /${{ matrix.compiler.msystem }}/lib/libtbb12.dll.a /${{ matrix.compiler.msystem }}/lib/libtbb.dll.a
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Setup environment
