@@ -49,7 +49,6 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: ${{ matrix.compiler.msystem }}
-          update: true
           pacboy: git toolchain:p cmake:p ninja:p gmp:p tbb:p hwloc:p boost:p
       - name: Setup dependencies
         if: ${{ matrix.os.runner == 'windows' }}
