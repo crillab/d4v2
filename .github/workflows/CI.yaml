@@ -33,6 +33,7 @@ jobs:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
 #      CMAKE_BUILD_TYPE: Debug
+      CMAKE_GENERATOR: Ninja
       SCCACHE_GHA_ENABLED: true
     steps:
       - name: Checkout
@@ -63,18 +64,18 @@ jobs:
           cd $(mktemp -d)
           git clone --recursive https://github.com/kahypar/mt-kahypar.git .
           git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
-          cmake -B build -G Ninja -DCMAKE_INSTALL_PREFIX=$MtKaHyPar_ROOT
+          cmake -B build -DCMAKE_INSTALL_PREFIX=$MtKaHyPar_ROOT
           cmake --build build --target mtkahypar
           cmake --install build
       - name: Build glucose
         if: ${{ matrix.solver == 'glucose' }}
         run: |
           cd 3rdParty/glucose-3.0
-          cmake -B build -G Ninja -DCMAKE_INSTALL_PREFIX=$glucose_ROOT
+          cmake -B build -DCMAKE_INSTALL_PREFIX=$glucose_ROOT
           cmake --build build
           cmake --install build
       - name: Configure
-        run: cmake -B build -G Ninja -DD4_SOLVER=${{ matrix.solver }} -DD4_PREPROC_SOLVER=${{ matrix.solver }}
+        run: cmake -B build -DD4_SOLVER=${{ matrix.solver }} -DD4_PREPROC_SOLVER=${{ matrix.solver }}
       - name: Build
         run: cmake --build build
       - name: Package
