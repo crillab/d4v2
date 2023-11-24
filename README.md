@@ -10,6 +10,18 @@
  - [zlib][zlib]
  - [Mt-KaHyPar][mtkahypar]
 
+#### Windows
+
+On Windows, [MSYS2][msys2] is required to build the project.
+For building with the GCC toolchain, the UCRT64 environment is used.
+All dependencies must be installed for the environment.
+This can be achieved by using `pacboy`:
+
+```
+pacman -S pactoys
+pacboy -S toolchain:p cmake:p ninja:p gmp:p boost:p
+```
+
 ### Build
 
 This is a CMake project.
@@ -64,3 +76,4 @@ The library is statically built and depending on code must be linked against all
 [zlib]: https://zlib.net
 [ninja]: https://github.com/ninja-build/ninja
 [mtkahypar]: https://github.com/kahypar/mt-kahypar
+[msys2]: https://msys2.org
