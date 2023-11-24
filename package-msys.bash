@@ -76,7 +76,7 @@ done
 
 # Copy files to destination.
 cp -r "$tmp/$system/bin" "$destination"
-cp -r "$tmp/$system/share" "$destination"
+cp -r "$tmp/$system/share/licenses" "$destination"
 
 # Cleanup.
 cd "$cwd" || exit 1
