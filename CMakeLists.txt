@@ -170,5 +170,3 @@ install(TARGETS
     ddnnf_compiler_lib
     ddnnf_compiler
 )
-
-include(CPack)
