@@ -1,20 +1,28 @@
 name: CI
 
 on:
-  - workflow_dispatch
   - push
+
+env:
+  CMAKE_GENERATOR: Ninja
+  CMAKE_C_COMPILER_LAUNCHER: sccache
+  CMAKE_CXX_COMPILER_LAUNCHER: sccache
+  SCCACHE_GHA_ENABLED: true
 
 jobs:
   Build:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - name: linux
-            runner: ubuntu
+        target:
+          - os: linux
+            runner: ubuntu-latest
             shell: bash
-          - name: windows
-            runner: windows
+          - os: macos
+            runner: macos-latest
+            shell: bash
+          - os: windows
+            runner: windows-latest
             shell: msys2
         compiler:
           - cc: gcc
@@ -25,57 +33,56 @@ jobs:
             msystem: clang64
         solver:
           - minisat
-#          - glucose
+          - glucose
         exclude:
-          - os: { name: windows, runner: windows, shell: msys2 }
-            compiler: { cc: clang, cxx: clang++, msystem: clang64 }
-    runs-on: ${{ matrix.os.runner }}-latest
+          - target: { os: macos }
+            compiler: { cc: gcc }
+# TODO: Enable glucose build.
+          - solver: glucose
+    runs-on: ${{ matrix.target.runner }}
     defaults:
       run:
-        shell: ${{ matrix.os.shell }} {0}
+        shell: ${{ matrix.target.shell }} {0}
     env:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
-      CMAKE_GENERATOR: Ninja
-      SCCACHE_GHA_ENABLED: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup MSYS2
-        if: ${{ matrix.os.runner == 'windows' }}
+        if: ${{ matrix.target.os == 'windows' }}
         uses: msys2/setup-msys2@v2
         with:
+          path-type: inherit
           msystem: ${{ matrix.compiler.msystem }}
           pacboy: git cmake:p ninja:p
       - name: Install dependencies
-        if: ${{ matrix.os.runner == 'ubuntu' }}
-        run: sudo apt install ninja-build libtbb-dev libhwloc-dev libboost-program-options-dev
+        if: ${{ matrix.target.os == 'linux' }}
+        run: sudo apt install ninja-build libboost-program-options-dev libhwloc-dev libtbb-dev
       - name: Install dependencies
-        if: ${{ matrix.os.runner == 'windows' }}
+        if: ${{ matrix.target.os == 'macos' }}
+        run: brew install ninja boost hwloc tbb
+      - name: Install dependencies
+        if: ${{ matrix.target.os == 'windows' }}
         run: |
-          pacboy -S --noconfirm toolchain:p tbb:p hwloc:p boost:p
+          pacboy -S --noconfirm toolchain:p boost:p gmp:p hwloc:p tbb:p
           mv /${{ matrix.compiler.msystem }}/lib/libtbb12.dll.a /${{ matrix.compiler.msystem }}/lib/libtbb.dll.a
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Setup environment
         run: |
-          echo CMAKE_C_COMPILER_LAUNCHER="$SCCACHE_PATH" >> $GITHUB_ENV
-          echo CMAKE_CXX_COMPILER_LAUNCHER="$SCCACHE_PATH" >> $GITHUB_ENV
-          echo BUILD_ROOT=$(mktemp -d) >> $GITHUB_ENV
-      - name: Setup build directory
-        if: ${{ matrix.os.runner != 'windows' }}
-        run: echo BUILD_ROOT_EXPORT=$BUILD_ROOT >> $GITHUB_ENV
-      - name: Setup build directory
-        if: ${{ matrix.os.runner == 'windows' }}
-        run: echo BUILD_ROOT_EXPORT=$(python3 -c "import os; print(os.environ['BUILD_ROOT'])") >> $GITHUB_ENV
+          export BUILD_ROOT=$(mktemp -d)
+          echo BUILD_ROOT=$BUILD_ROOT >> $GITHUB_ENV
+          echo BUILD_ROOT_EXPORT=$(python3 -c "import os; print(os.environ['BUILD_ROOT'])") >> $GITHUB_ENV
       - name: Build Mt-KaHyPar
         run: |
           cd $(mktemp -d)
           git clone --recursive https://github.com/kahypar/mt-kahypar.git .
-          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
-          cmake -B build -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT
+          cmake -B build -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT -D MT_KAHYPAR_DISABLE_BOOST=true
           cmake --build build --target mtkahypar
           cmake --install build
+# TODO: currently, macOS is only supported on master, move below clone to check out latest version when released.
+#          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
       - name: Build glucose
         if: ${{ matrix.solver == 'glucose' }}
         run: |
@@ -96,7 +103,7 @@ jobs:
       - name: Install
         run: cmake --install build
       - name: Package
-        if: ${{ matrix.os.runner == 'windows' }}
+        if: ${{ matrix.target.os == 'windows' }}
         run: |
           ./package-msys.bash $BUILD_ROOT $BUILD_ROOT/bin/*
           rm -f $BUILD_ROOT/bin/b2
@@ -104,7 +111,7 @@ jobs:
           rm -f $BUILD_ROOT/bin/hwloc*
           rm -f $BUILD_ROOT/bin/lstopo*
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: d4-${{ matrix.os.name }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}
+          name: d4-${{ matrix.target.os }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}
           path: ${{ env.BUILD_ROOT_EXPORT }}
