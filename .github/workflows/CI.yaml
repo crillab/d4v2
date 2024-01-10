@@ -81,7 +81,9 @@ jobs:
           cmake -B build -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT -D MT_KAHYPAR_DISABLE_BOOST=true
           cmake --build build --target mtkahypar
           cmake --install build
-# TODO: currently, macOS is only supported on master, move below clone to check out latest version when released.
+          mkdir -p $BUILD_ROOT/licenses/mt-kahypar
+          cp LICENSE $BUILD_ROOT/licenses/mt-kahypar/
+      # TODO: currently, macOS is only supported on master, move below clone to check out latest version when released.
 #          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
       - name: Build glucose
         if: ${{ matrix.solver == 'glucose' }}
@@ -110,6 +112,14 @@ jobs:
           rm -f $BUILD_ROOT/bin/bjam
           rm -f $BUILD_ROOT/bin/hwloc*
           rm -f $BUILD_ROOT/bin/lstopo*
+          rm -rf $BUILD_ROOT/lib
+      - name: Package
+        run: |
+          rm -rf $BUILD_ROOT/include
+          rm -rf $BUILD_ROOT/share
+          mkdir -p $BUILD_ROOT/licenses/d4
+          cp LICENSE $BUILD_ROOT/licenses/d4/
+          cp doc/built/${{ matrix.target.os }}.md $BUILD_ROOT/README.md
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
