@@ -1,4 +1,4 @@
-# d4 project
+# d4
 
 ## Installation
 
@@ -6,14 +6,14 @@
 
  - [CMake][cmake]
  - [GMP][gmp] (with C++ bindings)
- - [Boost][boost]
- - [zlib][zlib]
+ - [Boost][boost] (headers and `program_options`)
+ - [zlib][zlib] (optional, for glucose)
  - [Mt-KaHyPar][mtkahypar]
 
 #### Windows
 
 On Windows, [MSYS2][msys2] is required to build the project.
-For building with the GCC toolchain, the UCRT64 environment is used.
+For building with the GCC toolchain, the UCRT64 or CLANG64 environment is used depending on the compiler (GCC or Clang).
 All dependencies must be installed for the environment.
 This can be achieved by using `pacboy`:
 
@@ -28,16 +28,28 @@ This is a CMake project.
 To configure a debug build in the `build` directory (will be created), run:
 
 ```
-cmake -D CMAKE_BUILD_TYPE=Debug -B build
+cmake -B build
 ```
 
-The build type can be one of: `Debug`, `Release`, `RelWithDebInfo` or `MinSizeRel`.
-
-Optionally, a generator can be specified, for example [Ninja][ninja]:
+A generator can be specified, for example [Ninja][ninja]:
 
 ```
-cmake -D CMAKE_BUILD_TYPE=Debug -G Ninja -B build
+cmake -B build -G Ninja
 ```
+
+Optionally, CMake variables can be set to alter the build:
+
+```
+cmake -D <variable>=<value> -D <variable>=<value> -B build
+```
+
+Of interest for this project are:
+
+| Variable               | Value                                                | Description                                              |
+|------------------------|------------------------------------------------------|----------------------------------------------------------|
+| `CMAKE_BUILD_TYPE`     | `Debug`, `Release`, `RelWithDebInfo` or `MinSizeRel` | Whether to create a debug or release build.              |
+| `CMAKE_INSTALL_PREFIX` | Path                                                 | Where to install built files to using `cmake --install`. |
+| `MtKaHyPar_ROOT`       | Path                                                 | Alternativ root directory so search for Mt-KaHyPar.      |
 
 After configuring, build the project with:
 
@@ -47,28 +59,29 @@ cmake --build build
 
 The resulting executable will be built at `build/d4`.
 
+### Install
+
+To install the built files, use:
+
+```
+cmake --install build
+```
+
+The installation prefix can be changed as described in the build section.
+
 ## Usage
 
 See the help message:
 
 ```
-./build/d4 -h
+d4 --help
 ```
 
-The following command line is to solve WeightedMax#SAT instances as in [this article](https://drops.dagstuhl.de/opus/volltexte/2022/16702/pdf/LIPIcs-SAT-2022-28.pdf). We note that all options are the default ones, with file.wcnf being the input file. 
+To compile a CNF into a d-DNNF, use:
 
 ```
-./build/d4 -i file.wcnf -m max#sat --float 1 --maxsharpsat-option-and-dig 1 --maxsharpsat-option-greedy-init 0 --maxsharpsat-heuristic-phase-random 5 --maxsharpsat-heuristic-phase best
+d4 --input /path/to/input.cnf --method ddnnf-compiler --dump-ddnnf /path/to/output.ddnnf
 ```
-
-### Library
-
-This version of d4 also includes a simple wrapper library to compile d-DNNFs.
-It is built together with the `d4` executable, available at `build/libddnnf_compiler.a` (on Unix systems).
-Currently, it only contains a single function being almost identical to `d4`'s `main`, setting the method to `ddnnf-compiler`.
-The corresponding header file is found at `include/DdnnfCompiler.hpp`
-
-The library is statically built and depending on code must be linked against all its dependencies.
 
 [cmake]: https://cmake.org
 [gmp]: https://gmplib.org
