@@ -153,20 +153,4 @@ endif()
 add_executable(d4 src/Main.cpp)
 target_link_libraries(d4 core Boost::program_options)
 
-add_library(ddnnf_compiler_lib src/DdnnfCompiler.cpp)
-target_link_libraries(ddnnf_compiler_lib core)
-target_include_directories(ddnnf_compiler_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-set_target_properties(ddnnf_compiler_lib PROPERTIES
-    OUTPUT_NAME ddnnf_compiler
-    PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/include/DdnnfCompiler.hpp
-)
-
-add_executable(ddnnf_compiler src/DdnnfCompilerRunnable.cpp)
-target_link_libraries(ddnnf_compiler ddnnf_compiler_lib)
-
-install(TARGETS
-    d4
-    ddnnf_compiler_lib
-    ddnnf_compiler
-)
+install(TARGETS d4)
