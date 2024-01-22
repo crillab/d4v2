@@ -45,11 +45,14 @@ cmake -D <variable>=<value> -D <variable>=<value> -B build
 
 Of interest for this project are:
 
-| Variable               | Value                                                | Description                                              |
-|------------------------|------------------------------------------------------|----------------------------------------------------------|
-| `CMAKE_BUILD_TYPE`     | `Debug`, `Release`, `RelWithDebInfo` or `MinSizeRel` | Whether to create a debug or release build.              |
-| `CMAKE_INSTALL_PREFIX` | Path                                                 | Where to install built files to using `cmake --install`. |
-| `MtKaHyPar_ROOT`       | Path                                                 | Alternativ root directory so search for Mt-KaHyPar.      |
+| Variable               | Value                                                | Description                                                       |
+|------------------------|------------------------------------------------------|-------------------------------------------------------------------|
+| `CMAKE_BUILD_TYPE`     | `Debug`, `Release`, `RelWithDebInfo` or `MinSizeRel` | Whether to create a debug or release build.                       |
+| `D4_SOLVER`            | `minisat` or `glucose`                               | Which SAT solver to use. Defaults to `minisat`.                   |
+| `D4_PREPROC_SOLVER`    | `minisat` or `glucose`                               | Which SAT solver to use for preprocessing. Defaults to `minisat`. |
+| `CMAKE_INSTALL_PREFIX` | Path                                                 | Where to install built files to using `cmake --install`.          |
+| `MtKaHyPar_ROOT`       | Path                                                 | Alternative root directory so search for Mt-KaHyPar.              |
+| `glucose_ROOT`         | Path                                                 | Alternative root directory so search for glucose.                 |
 
 After configuring, build the project with:
 
