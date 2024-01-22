@@ -37,8 +37,6 @@ jobs:
         exclude:
           - target: { os: macos }
             compiler: { cc: gcc }
-# TODO: Enable glucose build.
-          - solver: glucose
     runs-on: ${{ matrix.target.runner }}
     defaults:
       run:
@@ -90,7 +88,7 @@ jobs:
         run: |
           cd 3rdParty/glucose-3.0
           cmake -B build -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT
-          cmake --build build
+          cmake --build build --target glucose
           cmake --install build
       - name: Configure
         run: >-
@@ -110,6 +108,7 @@ jobs:
           ./package-msys.bash $BUILD_ROOT $BUILD_ROOT/bin/*
           rm -f $BUILD_ROOT/bin/b2
           rm -f $BUILD_ROOT/bin/bjam
+          rm -f $BUILD_ROOT/bin/glucose
           rm -f $BUILD_ROOT/bin/hwloc*
           rm -f $BUILD_ROOT/bin/lstopo*
           rm -rf $BUILD_ROOT/lib

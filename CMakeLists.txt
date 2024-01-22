@@ -28,7 +28,7 @@ find_package(MtKaHyPar REQUIRED)
 # glucose is only needed when requested, which it is not by default.
 if(USE_GLUCOSE)
     find_package(glucose REQUIRED)
-    include_directories(${glucose_INCLUDE_DIR})
+    include_directories(${glucose_INCLUDE_DIRS})
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
