@@ -44,57 +44,43 @@ PartitioningHeuristic *PartitioningHeuristic::makePartitioningHeuristicNone(
 /**
    Create a partitioner.
 
-   @param[in] vm, the list of options.
+   @param[in] config, the configuration.
    @param[in] s, a view on the problem's structure.
 
    \return a partioner if the options are ocrrect, NULL otherwise.
  */
 PartitioningHeuristic *PartitioningHeuristic::makePartitioningHeuristic(
-    po::variables_map &vm, SpecManager &s, WrapperSolver &ws,
+    Config &config, SpecManager &s, WrapperSolver &ws,
     std::ostream &out) {
-  std::string meth = vm["partitioning-heuristic"].as<std::string>();
-  std::string inType = vm["input-type"].as<std::string>();
+  if (config.partitioning_heuristic == "none") return makePartitioningHeuristicNone(out);
 
-  if (meth == "none") return makePartitioningHeuristicNone(out);
+  out << "c [CONSTRUCTOR] Partitioner manager: " << config.partitioning_heuristic << " " << config.input_type << " "
+      << "reduceFormula(" << config.partitioning_heuristic_simplification_hyperedge << ") "
+      << "equivSimp(" << config.partitioning_heuristic_simplification_equivalence << ") "
+      << "phase(" << config.partitioning_heuristic_bipartite_phase << ") "
+      << "dynamicPhase(" << config.partitioning_heuristic_bipartite_phase_dynamic << ") "
+      << "staticPhase(" << config.partitioning_heuristic_bipartite_phase_static << ")\n";
 
-  bool reduceFormula =
-      vm["partitioning-heuristic-simplification-hyperedge"].as<bool>();
-  bool equivSimp =
-      vm["partitioning-heuristic-simplification-equivalence"].as<bool>();
-  int staticPhase =
-      vm["partitioning-heuristic-bipartite-phase-static"].as<int>();
-  double dynamicPhase =
-      vm["partitioning-heuristic-bipartite-phase-dynamic"].as<double>();
-  std::string phase =
-      vm["partitioning-heuristic-bipartite-phase"].as<std::string>();
-
-  out << "c [CONSTRUCTOR] Partitioner manager: " << meth << " " << inType << " "
-      << "reduceFormula(" << reduceFormula << ") "
-      << "equivSimp(" << equivSimp << ") "
-      << "phase(" << phase << ") "
-      << "dynamicPhase(" << dynamicPhase << ") "
-      << "staticPhase(" << staticPhase << ")\n";
-
-  if (inType == "cnf" || inType == "dimacs") {
-    if (meth == "bipartition-primal")
-      return new PartitioningHeuristicBipartitePrimal(vm, ws, s, out);
-    if (meth == "bipartition-dual")
-      return new PartitioningHeuristicBipartiteDual(vm, ws, s, out);
-    if (meth == "decomposition-static-dual") {
+  if (config.input_type == "cnf" || config.input_type == "dimacs") {
+    if (config.partitioning_heuristic == "bipartition-primal")
+      return new PartitioningHeuristicBipartitePrimal(config, ws, s, out);
+    if (config.partitioning_heuristic == "bipartition-dual")
+      return new PartitioningHeuristicBipartiteDual(config, ws, s, out);
+    if (config.partitioning_heuristic == "decomposition-static-dual") {
       PartitioningHeuristicStaticSingleDual *ret =
-          new PartitioningHeuristicStaticSingleDual(vm, ws, s, out);
+          new PartitioningHeuristicStaticSingleDual(config, ws, s, out);
       ret->init(out);
       return ret;
     }
-    if (meth == "decomposition-static-primal") {
+    if (config.partitioning_heuristic == "decomposition-static-primal") {
       PartitioningHeuristicStaticSinglePrimal *ret =
-          new PartitioningHeuristicStaticSinglePrimal(vm, ws, s, out);
+          new PartitioningHeuristicStaticSinglePrimal(config, ws, s, out);
       ret->init(out);
       return ret;
     }
-    if (meth == "decomposition-static-multi") {
+    if (config.partitioning_heuristic == "decomposition-static-multi") {
       PartitioningHeuristicStaticMulti *ret =
-          new PartitioningHeuristicStaticMulti(vm, ws, s, out);
+          new PartitioningHeuristicStaticMulti(config, ws, s, out);
       ret->init(out);
       return ret;
     }

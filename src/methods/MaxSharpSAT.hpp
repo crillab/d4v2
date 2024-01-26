@@ -17,10 +17,8 @@
  */
 #pragma once
 
-#include <bits/stdint-uintn.h>
 #include <sys/types.h>
 
-#include <boost/program_options.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <ctime>
@@ -29,6 +27,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 #include "Counter.hpp"
 #include "DataBranch.hpp"
@@ -36,6 +35,7 @@
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"
 #include "src/caching/TmpEntry.hpp"
+#include "src/config/Config.hpp"
 #include "src/heuristics/PartitioningHeuristic.hpp"
 #include "src/heuristics/PhaseHeuristic.hpp"
 #include "src/heuristics/ScoringMethod.hpp"
@@ -48,7 +48,6 @@
 #include "src/utils/MemoryStat.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 template <class T>
 class Counter;
 
@@ -58,10 +57,10 @@ class MaxSharpSAT : public MethodManager {
 
   struct MaxSharpSatResult {
     T count;
-    u_int8_t *valuation;
+    uint8_t *valuation;
 
     MaxSharpSatResult() : count(T(0)), valuation(NULL) {}
-    MaxSharpSatResult(const T c, u_int8_t *v) : count(c), valuation(v) {}
+    MaxSharpSatResult(const T c, uint8_t *v) : count(c), valuation(v) {}
 
     void display(unsigned size) {
       assert(valuation);
@@ -96,7 +95,7 @@ class MaxSharpSAT : public MethodManager {
   unsigned m_countUpdateMaxCount = 0;
 
   const unsigned c_sizePage = 1 << 18;
-  std::vector<u_int8_t *> m_memoryPages;
+  std::vector<uint8_t *> m_memoryPages;
   unsigned m_posInMemoryPages;
   unsigned m_sizeArray;
 
@@ -125,9 +124,9 @@ class MaxSharpSAT : public MethodManager {
   /**
      Constructor.
 
-     @param[in] vm, the list of options.
+     @param[in] config, the configuration.
    */
-  MaxSharpSAT(po::variables_map &vm, std::string &meth, bool isFloat,
+  MaxSharpSAT(Config &config, std::string &meth, bool isFloat,
               ProblemManager *initProblem, std::ostream &out,
               LastBreathPreproc &lastBreath)
       : m_problem(initProblem), m_out(nullptr) {
@@ -136,20 +135,20 @@ class MaxSharpSAT : public MethodManager {
     m_out.clear(out.rdstate());
     m_out.basic_ios<char>::rdbuf(out.rdbuf());
 
-    m_heuristicMax = vm["maxsharpsat-heuristic-phase"].as<std::string>();
+    m_heuristicMax = config.maxsharpsat_heuristic_phase;
     m_out << "c [CONSTRUCTOR MAX#SAT] Heuristic on MAX variables: "
           << m_heuristicMax << "\n";
-    m_heuristicMaxRdm = vm["maxsharpsat-heuristic-phase-random"].as<unsigned>();
+    m_heuristicMaxRdm = config.maxsharpsat_heuristic_phase_random;
     m_out << "c [CONSTRUCTOR MAX#SAT] Use random on MAX variables: "
           << m_heuristicMaxRdm << "\n";
-    m_threshold = vm["maxsharpsat-threshold"].as<double>();
+    m_threshold = config.maxsharpsat_threshold;
     m_out << "c [CONSTRUCTOR MAX#SAT] Threshold: " << m_threshold << "\n";
-    m_andDig = vm["maxsharpsat-option-and-dig"].as<bool>();
+    m_andDig = config.maxsharpsat_option_and_dig;
     m_out << "c [CONSTRUCTOR MAX#SAT] Dig for a partial solution under an AND: "
           << m_andDig << "\n";
 
     // we create the SAT solver.
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(config, m_out);
     assert(m_solver);
     m_panicMode = lastBreath.panic;
     m_solver->initSolver(*m_problem);
@@ -158,13 +157,13 @@ class MaxSharpSAT : public MethodManager {
     m_solver->setNeedModel(true);
 
     // we initialize the object that will give info about the problem.
-    m_specs = SpecManager::makeSpecManager(vm, *m_problem, m_out);
+    m_specs = SpecManager::makeSpecManager(config, *m_problem, m_out);
     assert(m_specs);
 
     // we initialize the object used to compute score and partition.
-    m_hVar = ScoringMethod::makeScoringMethod(vm, *m_specs, *m_solver, m_out);
+    m_hVar = ScoringMethod::makeScoringMethod(config, *m_specs, *m_solver, m_out);
     m_hPhase =
-        PhaseHeuristic::makePhaseHeuristic(vm, *m_specs, *m_solver, m_out);
+        PhaseHeuristic::makePhaseHeuristic(config, *m_specs, *m_solver, m_out);
 
     // specify which variables are decisions, and which are not.
     m_redirectionPos.clear();
@@ -191,19 +190,19 @@ class MaxSharpSAT : public MethodManager {
 
     // no partitioning heuristic for the moment.
     assert(m_hVar && m_hPhase);
-    m_cacheInd = CacheManager<T>::makeCacheManager(vm, m_problem->getNbVar(),
+    m_cacheInd = CacheManager<T>::makeCacheManager(config, m_problem->getNbVar(),
                                                    m_specs, m_out);
     m_cacheMax = CacheManager<MaxSharpSatResult>::makeCacheManager(
-        vm, m_problem->getNbVar(), m_specs, m_out);
+            config, m_problem->getNbVar(), m_specs, m_out);
 
     // init the clock time.
     initTimer();
 
-    m_greedyInitActivated = vm["maxsharpsat-option-greedy-init"].as<bool>();
+    m_greedyInitActivated = config.maxsharpsat_option_greedy_init;
     m_out << "c [MAX#SAT] Greedy init activated: " << m_greedyInitActivated
           << "\n";
 
-    m_optCached = vm["cache-activated"].as<bool>();
+    m_optCached = config.cache_activated;
     m_nbCallProj = m_nbDecisionNode = m_nbSplit = m_nbCallCall = 0;
 
     m_stampIdx = 0;
@@ -211,7 +210,7 @@ class MaxSharpSAT : public MethodManager {
     m_out << "c\n";
 
     // init the memory required for storing interpretation.
-    m_memoryPages.push_back(new u_int8_t[c_sizePage]);
+    m_memoryPages.push_back(new uint8_t[c_sizePage]);
     m_posInMemoryPages = 0;
     m_sizeArray = m_problem->getMaxVar().size();
 
@@ -345,13 +344,13 @@ class MaxSharpSAT : public MethodManager {
    * @brief Get a pointer on an allocated array of size m_sizeArray (which is
    * set once in the constructor).
    *
-   * @return a pointer on a u_int8_t array.
+   * @return a pointer on a uint8_t array.
    */
-  u_int8_t *getArray() {
-    u_int8_t *ret = &(m_memoryPages.back()[m_posInMemoryPages]);
+  uint8_t *getArray() {
+    uint8_t *ret = &(m_memoryPages.back()[m_posInMemoryPages]);
     m_posInMemoryPages += m_sizeArray;
     if (m_posInMemoryPages > c_sizePage) {
-      m_memoryPages.push_back(new u_int8_t[c_sizePage]);
+      m_memoryPages.push_back(new uint8_t[c_sizePage]);
       m_posInMemoryPages = 0;
       ret = m_memoryPages.back();
     }
@@ -409,8 +408,8 @@ class MaxSharpSAT : public MethodManager {
    * result.
    * @param orValuation is another 'boolean' vector used for the OR
    */
-  void orOnMaxVar(std::vector<Var> &vars, u_int8_t *resValuation,
-                  u_int8_t *orValuation) {
+  void orOnMaxVar(std::vector<Var> &vars, uint8_t *resValuation,
+                  uint8_t *orValuation) {
     for (auto v : vars) {
       if (m_isMaxDecisionVariable[v])
         resValuation[m_redirectionPos[v]] |= orValuation[m_redirectionPos[v]];
@@ -865,9 +864,9 @@ class MaxSharpSAT : public MethodManager {
    * variables where the variables not belonging to m_problem->getIndVar()
    * are existantially quantified.
    *
-   * @param[in] vm, the set of options.
+   * @param[in] config, the configuration.
    */
-  void run(po::variables_map &vm) {
+  void run(Config &config) {
     std::vector<Var> setOfVar;
     for (int i = 1; i <= m_specs->getNbVariable(); i++) setOfVar.push_back(i);
 

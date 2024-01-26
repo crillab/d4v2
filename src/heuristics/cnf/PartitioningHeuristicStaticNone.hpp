@@ -18,6 +18,7 @@
 #pragma once
 
 #include "PartitioningHeuristicStatic.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
 class PartitioningHeuristicStaticNone : public PartitioningHeuristicStatic {
@@ -28,10 +29,10 @@ class PartitioningHeuristicStaticNone : public PartitioningHeuristicStatic {
                             std::vector<unsigned> &bucketNumber);
 
  public:
-  PartitioningHeuristicStaticNone(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStaticNone(Config &config, WrapperSolver &s,
                                   SpecManager &om, std::ostream &out);
 
-  PartitioningHeuristicStaticNone(po::variables_map &vm, WrapperSolver &s,
+  PartitioningHeuristicStaticNone(Config &config, WrapperSolver &s,
                                   SpecManager &om, int nbClause, int nbVar,
                                   int sumSize, std::ostream &out);
 

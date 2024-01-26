@@ -27,31 +27,28 @@
 namespace d4 {
 
 /**
-   Select from the arguments store in vm the good scoring method and return it.
+   Select from the arguments store in config the good scoring method and return it.
 
-   @param[in] vm, the arguments on the command line.
+   @param[in] config, the configuration.
    @pararm[in] p, the problem manager.
 
    \return the scoring method
  */
-ScoringMethod *ScoringMethod::makeScoringMethod(po::variables_map &vm,
+ScoringMethod *ScoringMethod::makeScoringMethod(Config &config,
                                                 SpecManager &p,
                                                 ActivityManager &am,
                                                 std::ostream &out) {
-  std::string inType = vm["input-type"].as<std::string>();
-  std::string meth = vm["scoring-method"].as<std::string>();
+  out << "c [CONSTRUCTOR] Variable heuristic: " << config.scoring_method << "\n";
 
-  out << "c [CONSTRUCTOR] Variable heuristic: " << meth << "\n";
-
-  if (inType == "cnf" || inType == "dimacs") {
+  if (config.input_type == "cnf" || config.input_type == "dimacs") {
     try {
       SpecManagerCnf &ps = dynamic_cast<SpecManagerCnf &>(p);
 
-      if (meth == "mom") return new ScoringMethodMom(ps);
-      if (meth == "dlcs") return new ScoringMethodDlcs(ps);
-      if (meth == "vsids") return new ScoringMethodVsids(am);
-      if (meth == "vsads") return new ScoringMethodVsads(ps, am);
-      if (meth == "jwts") return new ScoringMethodJwts(ps);
+      if (config.scoring_method == "mom") return new ScoringMethodMom(ps);
+      if (config.scoring_method == "dlcs") return new ScoringMethodDlcs(ps);
+      if (config.scoring_method == "vsids") return new ScoringMethodVsids(am);
+      if (config.scoring_method == "vsads") return new ScoringMethodVsads(ps, am);
+      if (config.scoring_method == "jwts") return new ScoringMethodJwts(ps);
       return NULL;
     } catch (std::bad_cast &bc) {
       std::cerr << "bad_cast caught: " << bc.what() << '\n';

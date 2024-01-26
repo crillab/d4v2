@@ -1,112 +1,156 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.27)
 
-# set the project name and version
-project(D4 VERSION 0.1)
+project(d4 VERSION 2.0.0 LANGUAGES CXX)
 
-add_custom_target(clean-cmake-files
-   COMMAND ${CMAKE_COMMAND} -P clean-all.cmake
-)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(Solver)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-set(CMAKE_BUILD_TYPE Release)
+# FIXME: libmtkahypar currently can not be built statically (https://github.com/kahypar/mt-kahypar/pull/161)
+option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 
-# specify the C++ standard
-set(CMAKE_CXX_STANDARD_REQUIRED 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-# source/include files
-file(GLOB_RECURSE SOURCES ./src/**.cpp)
-file(GLOB_RECURSE INCLUDES ./src/**.hpp)
-
-set(SRCS ${SOURCES})
-set(HEADERS ${INCLUDES})
-
-set(Boost_USE_STATIC_LIBS ON)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3rdParty/kahypar/)
-
-FIND_PACKAGE(Boost COMPONENTS program_options REQUIRED)
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-
-if (NOT DEFINED BUILD_MODE)
-   set(BUILD_MODE 1)
+if(NOT BUILD_SHARED_LIBS)
+    set(GMP_USE_STATIC_LIBS ON)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(MtKaHyPar_USE_STATIC_LIBS ON)
+    set(glucose_USE_STATIC_LIBS ON)
 endif()
 
-# build.
-if(${BUILD_MODE} EQUAL 1)
-  # create an executable
-  add_executable(d4_debug ${SRCS} ${HEADERS})
+find_package(GMP REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(MtKaHyPar REQUIRED)
 
-  # PROFILE
-  message("Debug mode activated")
-  set(CMAKE_CXX_COMPILER /usr/bin/g++-8 CACHE PATH "" FORCE)
-  
-  set(CMAKE_BUILD_TYPE Debug)
-  target_compile_options(d4_debug PUBLIC -std=c++17 -Wall -g -pg -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D DEBUG -DCMAKE_EXPORT_COMPILE_COMMANDS=1)
-  target_link_libraries (d4_debug -lz -g -pg -lgmpxx -lgmp -O3 ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_debug.a)
-
-  #target_compile_options(d4_debug PUBLIC -std=c++17 -Wall -g -O1 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D DEBUG -DCMAKE_EXPORT_COMPILE_COMMANDS=1)
-  #target_link_libraries (d4_debug -lz -g -lgmpxx -lgmp -O1 ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_debug.a)
-
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4_debug
-    DESTINATION bin
-    RENAME ${CMAKE_PROJECT_NAME}-d4_debug)
-elseif(${BUILD_MODE} EQUAL 2)
-  message("Static mode activated")
-
-  add_executable(d4_static ${SRCS} ${HEADERS})
-
-  target_compile_options(d4_static PUBLIC -std=c++17 -Wall -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D NDEBUG -static)
-  target_link_libraries (d4_static -lz -O3 -lgmpxx -lgmp ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a -D NDEBUG -static ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_static.a)
-  
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4_static
-    DESTINATION bin
-    RENAME ${CMAKE_PROJECT_NAME}-d4_static)
-elseif(${BUILD_MODE} EQUAL 3)
-  message("Library creation")
-  add_library(d4 ${SRCS} ${HEADERS})
-
-  target_compile_options(d4 PUBLIC -DNOMAIN -std=c++17 -Wall -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D NDEBUG)
-  target_link_libraries (d4 -lz -O3 -lgmpxx -lgmp ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a -D NDEBUG ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_standard.a)
-  target_include_directories (d4 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-  install (TARGETS d4 DESTINATION lib)
-  install(FILES ${HEADER} DESTINATION include/${CMAKE_PROJECT_NAME})
-else()  
-# create an executable
-add_executable(d4 ${SRCS} ${HEADERS})
-
-message("Classical mode activated")
-target_compile_options(d4 PUBLIC -std=c++17 -Wall -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses)
-target_link_libraries (d4 -lz -O3 -lgmpxx -lgmp ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_standard.a)
-
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4
-  DESTINATION bin
-  RENAME ${CMAKE_PROJECT_NAME}-d4)
+# glucose is only needed when requested, which it is not by default.
+if(USE_GLUCOSE)
+    find_package(glucose REQUIRED)
+    include_directories(${glucose_INCLUDE_DIRS})
 endif()
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${GMP_INCLUDE_DIRS})
+include_directories(${GMPXX_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${MtKaHyPar_INCLUDE_DIR})
 
-file(GLOB cmake_generated ${CMAKE_SOURCE_DIR}/src/*~)
+add_library(caching OBJECT
+    src/caching/BucketAllocator.cpp
+    src/caching/cnf/BucketInConstruction.cpp
+    src/caching/DataInfo.cpp
+)
 
-foreach(file ${cmake_generated})
+add_library(config OBJECT
+    src/config/Config.cpp
+    src/config/ConfigConverter.cpp
+)
 
-  if (EXISTS ${file})
-     file(REMOVE_RECURSE ${file})
-  endif()
+add_library(heuristics OBJECT
+    src/heuristics/cnf/PartitioningHeuristicBipartite.cpp
+    src/heuristics/cnf/PartitioningHeuristicBipartiteDual.cpp
+    src/heuristics/cnf/PartitioningHeuristicBipartitePrimal.cpp
+    src/heuristics/cnf/PartitioningHeuristicStatic.cpp
+    src/heuristics/cnf/PartitioningHeuristicStaticMulti.cpp
+    src/heuristics/cnf/PartitioningHeuristicStaticNone.cpp
+    src/heuristics/cnf/PartitioningHeuristicStaticSingle.cpp
+    src/heuristics/cnf/PartitioningHeuristicStaticSingleDual.cpp
+    src/heuristics/cnf/PartitioningHeuristicStaticSinglePrimal.cpp
+    src/heuristics/cnf/PhaseSelectorDynamic.cpp
+    src/heuristics/cnf/PhaseSelectorManager.cpp
+    src/heuristics/cnf/PhaseSelectorNone.cpp
+    src/heuristics/cnf/PhaseSelectorStatic.cpp
+    src/heuristics/cnf/ScoringMethodDlcs.cpp
+    src/heuristics/cnf/ScoringMethodJwts.cpp
+    src/heuristics/cnf/ScoringMethodMom.cpp
+    src/heuristics/cnf/ScoringMethodVsads.cpp
+    src/heuristics/cnf/ScoringMethodVsids.cpp
+    src/heuristics/PartitioningHeuristic.cpp
+    src/heuristics/PartitioningHeuristicNone.cpp
+    src/heuristics/PhaseHeuristic.cpp
+    src/heuristics/PhaseHeuristicFalse.cpp
+    src/heuristics/PhaseHeuristicOccurrence.cpp
+    src/heuristics/PhaseHeuristicPolarity.cpp
+    src/heuristics/PhaseHeuristicTrue.cpp
+    src/heuristics/ScoringMethod.cpp
+)
 
-endforeach(file)
+add_library(hyperGraph OBJECT
+    src/hyperGraph/HyperEdge.cpp
+    src/hyperGraph/HyperGraph.cpp
+    src/hyperGraph/HyperGraphExtractorDual.cpp
+    src/hyperGraph/HyperGraphExtractorPrimal.cpp
+)
 
+add_library(methods OBJECT
+    src/methods/MethodManager.cpp
+    src/methods/QueryManager.cpp
+)
 
+add_library(partitioner OBJECT
+    src/partitioner/PartitionerKahyparMT.cpp
+    src/partitioner/PartitionerManager.cpp
+)
 
-#
-# Testing
-#
+add_library(preprocs OBJECT
+    src/preprocs/cnf/PreprocBackboneCnf.cpp
+    src/preprocs/cnf/PreprocBasicCnf.cpp
+    src/preprocs/PreprocManager.cpp
+)
 
-# enable_testing()
+add_library(problem OBJECT
+    src/problem/cnf/ParserDimacs.cpp
+    src/problem/cnf/ProblemManagerCnf.cpp
+    src/problem/ProblemManager.cpp
+    src/problem/ProblemTypes.cpp
+)
 
-# include(cmake_includes/AddGoogleTest.cmake)
-# add_executable(HashString_test tests/HashString_test.cpp)
-# add_gtest(HashString_test)
+add_library(solvers OBJECT
+    src/solvers/ActivityManager.cpp
+    src/solvers/cnf/minisat/Solver.cpp
+    src/solvers/cnf/WrapperMinisat.cpp
+    src/solvers/WrapperSolver.cpp
+)
+
+if(USE_GLUCOSE)
+    target_sources(solvers PRIVATE src/solvers/cnf/WrapperGlucose.cpp)
+endif()
+
+add_library(spec OBJECT
+    src/specs/cnf/SpecManagerCnf.cpp
+    src/specs/cnf/SpecManagerCnfDyn.cpp
+    src/specs/SpecManager.cpp
+)
+
+add_library(utils OBJECT
+    src/utils/AtMost1Extractor.cpp
+    src/utils/cnf/AndGatesExtractor.cpp
+    src/utils/EquivExtractor.cpp
+)
+
+add_library(core STATIC
+    $<TARGET_OBJECTS:config>
+    $<TARGET_OBJECTS:caching>
+    $<TARGET_OBJECTS:heuristics>
+    $<TARGET_OBJECTS:hyperGraph>
+    $<TARGET_OBJECTS:methods>
+    $<TARGET_OBJECTS:partitioner>
+    $<TARGET_OBJECTS:preprocs>
+    $<TARGET_OBJECTS:problem>
+    $<TARGET_OBJECTS:solvers>
+    $<TARGET_OBJECTS:spec>
+    $<TARGET_OBJECTS:utils>
+)
+
+target_link_libraries(core GMP::GMPXX GMP::GMP MtKaHyPar::MtKaHyPar)
+
+if(USE_GLUCOSE)
+    target_link_libraries(core glucose::glucose)
+endif()
+
+add_executable(d4 src/Main.cpp)
+target_link_libraries(d4 core Boost::program_options)
+
+install(TARGETS d4)

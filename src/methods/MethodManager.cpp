@@ -36,17 +36,13 @@ namespace mpz = boost::multiprecision;
 /**
    Consider the option in order to generate an instance of the wanted method.
 
-   @param[in] vm, the map of option.
+   @param[in] config, the configuration.
    @param[in] out, the stream where are print the information.
  */
-MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
+MethodManager *MethodManager::makeMethodManager(Config &config,
                                                 std::ostream &out) {
-  std::string meth = vm["method"].as<std::string>();
-  int precision = vm["float-precision"].as<int>();
-  bool isFloat = vm["float"].as<bool>();
-
   // the initial problem.
-  ProblemManager *initProblem = ProblemManager::makeProblemManager(vm, out);
+  ProblemManager *initProblem = ProblemManager::makeProblemManager(config, out);
   out << "c [INITIAL INPUT] \033[4m\033[32mStatistics about the input "
          "formula\033[0m\n";
   initProblem->displayStat(out, "c [INITIAL INPUT] ");
@@ -54,7 +50,7 @@ MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
   assert(initProblem);
 
   MethodManager *ret =
-      makeMethodManager(vm, initProblem, meth, precision, isFloat, out);
+      makeMethodManager(config, initProblem, config.method, config.float_precision, config.isFloat, out);
   delete initProblem;
 
   return ret;
@@ -63,7 +59,7 @@ MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
 /**
    Consider the option in order to generate an instance of the wanted method.
 
-   @param[in] vm, the map of option.
+   @param[in] config, the configuration.
    @param[in] out, the stream where are print the information.
    @param[in] meth, the method we search to construct.
    @param[in] precision, the precision for the bignum.
@@ -72,7 +68,7 @@ MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
 
    \return a method manager.
  */
-MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
+MethodManager *MethodManager::makeMethodManager(Config &config,
                                                 ProblemManager *problem,
                                                 std::string meth, int precision,
                                                 bool isFloat,
@@ -81,51 +77,49 @@ MethodManager *MethodManager::makeMethodManager(po::variables_map &vm,
   boost::multiprecision::mpf_float::default_precision(precision);
 
   LastBreathPreproc lastBreath;
-  ProblemManager *runProblem = runPreproc(vm, problem, out, lastBreath);
+  ProblemManager *runProblem = runPreproc(config, problem, out, lastBreath);
   displayInfoVariables(runProblem, out);
   out << "c [MODE] Panic: " << lastBreath.panic << "\n";
 
   if (meth == "counting") {
     if (!isFloat)
-      // return new DpllStyleMethod<int, int>(vm, meth, isFloat, runProblem,
-      // out,                                 lastBreath);
       return new DpllStyleMethod<mpz::mpz_int, mpz::mpz_int>(
-          vm, meth, isFloat, runProblem, out, lastBreath);
+              config, meth, isFloat, runProblem, out, lastBreath);
     else
       return new DpllStyleMethod<mpz::mpf_float, mpz::mpf_float>(
-          vm, meth, isFloat, runProblem, out, lastBreath);
+              config, meth, isFloat, runProblem, out, lastBreath);
   }
 
   if (meth == "ddnnf-compiler") {
     if (!isFloat)
       return new DpllStyleMethod<mpz::mpz_int, Node<mpz::mpz_int> *>(
-          vm, meth, isFloat, runProblem, out, lastBreath);
+              config, meth, isFloat, runProblem, out, lastBreath);
     else
       return new DpllStyleMethod<mpz::mpf_float, Node<mpz::mpf_float> *>(
-          vm, meth, isFloat, runProblem, out, lastBreath);
+              config, meth, isFloat, runProblem, out, lastBreath);
   }
 
   if (meth == "projMC") {
     if (!isFloat)
-      return new ProjMCMethod<mpz::mpz_int>(vm, isFloat, runProblem,
+      return new ProjMCMethod<mpz::mpz_int>(config, isFloat, runProblem,
                                             lastBreath);
-    return new ProjMCMethod<mpz::mpf_float>(vm, isFloat, runProblem,
+    return new ProjMCMethod<mpz::mpf_float>(config, isFloat, runProblem,
                                             lastBreath);
   }
 
   if (meth == "max#sat") {
     if (!isFloat)
-      return new MaxSharpSAT<mpz::mpz_int>(vm, meth, isFloat, runProblem, out,
+      return new MaxSharpSAT<mpz::mpz_int>(config, meth, isFloat, runProblem, out,
                                            lastBreath);
-    return new MaxSharpSAT<mpz::mpf_float>(vm, meth, isFloat, runProblem, out,
+    return new MaxSharpSAT<mpz::mpf_float>(config, meth, isFloat, runProblem, out,
                                            lastBreath);
   }
 
   if (meth == "min#sat") {
     if (!isFloat)
-      return new MinSharpSAT<mpz::mpz_int>(vm, meth, isFloat, runProblem, out,
+      return new MinSharpSAT<mpz::mpz_int>(config, meth, isFloat, runProblem, out,
                                            lastBreath);
-    return new MinSharpSAT<mpz::mpf_float>(vm, meth, isFloat, runProblem, out,
+    return new MinSharpSAT<mpz::mpf_float>(config, meth, isFloat, runProblem, out,
                                            lastBreath);
   }
 
@@ -167,17 +161,17 @@ void MethodManager::displayInfoVariables(ProblemManager *problem,
 /**
  * @brief Run the preproc method before constructing the method.
  *
- * @param[in] vm is the option list.
+ * @param[in] config the configuration.
  * @param[in] initProblem is the input problem we want to preproc.
  * @param[in] out is the stream where will be printed out the log.
  * @param[out] lastBreath information collected when the preproc has done its
  * job.
  */
-ProblemManager *MethodManager::runPreproc(po::variables_map &vm,
+ProblemManager *MethodManager::runPreproc(Config &config,
                                           ProblemManager *initProblem,
                                           std::ostream &out,
                                           LastBreathPreproc &lastBreath) {
-  PreprocManager *preproc = PreprocManager::makePreprocManager(vm, out);
+  PreprocManager *preproc = PreprocManager::makePreprocManager(config, out);
   assert(preproc);
   ProblemManager *problem = preproc->run(initProblem, lastBreath);
   out << "c [MAIN PREPROCESSED INPUT] \033[4m\033[32mStatistics about the "

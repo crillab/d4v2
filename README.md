@@ -1,23 +1,95 @@
-# d4 project
+# d4
 
-# How to Compile
+## Installation
 
-In order to compile the project cmake (version>=3.1) and ninja have to
-be installed. The following command lines then build and compile the
-project.
+### Prerequisites
 
-```console
-$ ./build.sh
+ - [CMake][cmake]
+ - [GMP][gmp] (with C++ bindings)
+ - [Boost][boost] (headers and `program_options`)
+ - [zlib][zlib] (optional, for glucose)
+ - [Mt-KaHyPar][mtkahypar]
+
+#### Windows
+
+On Windows, [MSYS2][msys2] is required to build the project.
+For building with the GCC toolchain, the UCRT64 or CLANG64 environment is used depending on the compiler (GCC or Clang).
+All dependencies must be installed for the environment.
+This can be achieved by using `pacboy`:
+
+```
+pacman -S pactoys
+pacboy -S toolchain:p cmake:p ninja:p gmp:p boost:p
 ```
 
-The executable is called d4 and is in the build repository.
+### Build
 
-```console
-$ ./build/d4 -h
+This is a CMake project.
+To configure a debug build in the `build` directory (will be created), run:
+
+```
+cmake -B build
 ```
 
-The following command line is to solve WeightedMax#SAT instances as in [this article](https://drops.dagstuhl.de/opus/volltexte/2022/16702/pdf/LIPIcs-SAT-2022-28.pdf). We note that all options are the default ones, with file.wcnf being the input file. 
+A generator can be specified, for example [Ninja][ninja]:
 
-```console
-$ ./build/d4 -i file.wcnf -m max#sat --float 1 --maxsharpsat-option-and-dig 1 --maxsharpsat-option-greedy-init 0 --maxsharpsat-heuristic-phase-random 5 --maxsharpsat-heuristic-phase best
 ```
+cmake -B build -G Ninja
+```
+
+Optionally, CMake variables can be set to alter the build:
+
+```
+cmake -D <variable>=<value> -D <variable>=<value> -B build
+```
+
+Of interest for this project are:
+
+| Variable               | Value                                                | Description                                                       |
+|------------------------|------------------------------------------------------|-------------------------------------------------------------------|
+| `CMAKE_BUILD_TYPE`     | `Debug`, `Release`, `RelWithDebInfo` or `MinSizeRel` | Whether to create a debug or release build.                       |
+| `D4_SOLVER`            | `minisat` or `glucose`                               | Which SAT solver to use. Defaults to `minisat`.                   |
+| `D4_PREPROC_SOLVER`    | `minisat` or `glucose`                               | Which SAT solver to use for preprocessing. Defaults to `minisat`. |
+| `CMAKE_INSTALL_PREFIX` | Path                                                 | Where to install built files to using `cmake --install`.          |
+| `MtKaHyPar_ROOT`       | Path                                                 | Alternative root directory so search for Mt-KaHyPar.              |
+| `glucose_ROOT`         | Path                                                 | Alternative root directory so search for glucose.                 |
+
+After configuring, build the project with:
+
+```
+cmake --build build
+```
+
+The resulting executable will be built at `build/d4`.
+
+### Install
+
+To install the built files, use:
+
+```
+cmake --install build
+```
+
+The installation prefix can be changed as described in the build section.
+
+## Usage
+
+See the help message:
+
+```
+d4 --help
+```
+
+To compile a CNF into a d-DNNF, use:
+
+```
+d4 --input /path/to/input.cnf --method ddnnf-compiler --dump-ddnnf /path/to/output.ddnnf
+```
+
+[cmake]: https://cmake.org
+[gmp]: https://gmplib.org
+[boost]: https://boost.org
+[zlib]: https://zlib.net
+[ninja]: https://github.com/ninja-build/ninja
+[mtkahypar]: https://github.com/kahypar/mt-kahypar
+[msys2]: https://msys2.org

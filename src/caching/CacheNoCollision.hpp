@@ -17,18 +17,16 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <vector>
 
 #include "CacheManager.hpp"
 #include "CachedBucket.hpp"
 #include "TmpEntry.hpp"
+#include "src/config/Config.hpp"
 #include "src/hashing/HashString.hpp"
 #include "src/specs/SpecManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
-
 template <class T>
 class CacheManager;
 
@@ -44,14 +42,14 @@ class CacheNoCollision : public CacheManager<T> {
   /**
    * @brief Construct a new Cache No Collision object.
    *
-   * @param vm is a map to get the option.
+   * @param config is the configuration.
    * @param nbVar is the number of variables.
    * @param specs is a structure to get data about the formula.
    * @param out is the stream where are printed out the logs.
    */
-  CacheNoCollision(po::variables_map &vm, unsigned nbVar, SpecManager *specs,
+  CacheNoCollision(Config &config, unsigned nbVar, SpecManager *specs,
                    std::ostream &out)
-      : CacheManager<T>(vm, nbVar, specs, out) {
+      : CacheManager<T>(config, nbVar, specs, out) {
     out << "c [CACHE NO-COLLISION CONSTRUCTOR]\n";
     initHashTable(nbVar);
   }  // constructor

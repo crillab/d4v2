@@ -20,22 +20,23 @@
 #include <ostream>
 
 #include "src/hyperGraph/HyperGraphExtractorPrimal.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
 
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
  */
 PartitioningHeuristicStaticSinglePrimal::
-    PartitioningHeuristicStaticSinglePrimal(po::variables_map &vm,
+    PartitioningHeuristicStaticSinglePrimal(Config &config,
                                             WrapperSolver &s, SpecManager &om,
                                             std::ostream &out)
     : PartitioningHeuristicStaticSinglePrimal(
-          vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
+          config, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
@@ -44,7 +45,7 @@ PartitioningHeuristicStaticSinglePrimal::
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
    @param[in] nbClause, the number of clauses.
@@ -52,16 +53,15 @@ PartitioningHeuristicStaticSinglePrimal::
    @param[in] sumSize, which give the number of literals.
  */
 PartitioningHeuristicStaticSinglePrimal::
-    PartitioningHeuristicStaticSinglePrimal(po::variables_map &vm,
+    PartitioningHeuristicStaticSinglePrimal(Config &config,
                                             WrapperSolver &s, SpecManager &om,
                                             int nbClause, int nbVar,
                                             int sumSize, std::ostream &out)
-    : PartitioningHeuristicStaticSingle(vm, s, om, nbClause, nbVar, sumSize,
+    : PartitioningHeuristicStaticSingle(config, s, om, nbClause, nbVar, sumSize,
                                         out) {
   out << "c [CONSTRUCTOR] Static partitioner: primal\n";
 
-  m_pm = PartitionerManager::makePartitioner(vm, m_nbVar, m_nbClause, sumSize,
-                                             out);
+  m_pm = PartitionerManager::makePartitioner(m_nbVar, m_nbClause, sumSize,out);
   m_hypergraph.init(m_nbClause + sumSize + 1);
   m_hypergraphExtractor = new HyperGraphExtractorPrimal(m_nbVar, m_nbClause);
   m_maxNbNodes = m_nbVar + 1;

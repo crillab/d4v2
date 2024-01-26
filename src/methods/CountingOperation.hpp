@@ -124,39 +124,35 @@ class CountingOperation : public Operation<T, T> {
      Manage the final result compute.
 
      @param[in] result, the result we are considering.
-     @param[in] vm, a set of options that describes what we want to do on the
-     given result.
+     @param[in] config, the configuration.
      @param[in] out, the output stream.
    */
-  void manageResult(T &result, po::variables_map &vm, std::ostream &out) {
-    std::string format = vm["keyword-output-format-solution"].as<std::string>();
-    std::string outFormat = vm["output-format"].as<std::string>();
-
-    if (outFormat == "competition") {
+  void manageResult(T &result, Config &config, std::ostream &out) {
+    if (config.output_format == "competition") {
       boost::multiprecision::mpf_float::default_precision(128);
       out.precision(std::numeric_limits<
                     boost::multiprecision::cpp_dec_float_50>::digits10);
 
       if (result == 0) {
         out << "s UNSATISFIABLE\n";
-        out << "c " << format << "\n";
+        out << "c " << config.keyword_output_format_solution << "\n";
         out << "c s log10-estimate -inf\n";
         out << "c s exact quadruple int 0\n";
       } else {
         out << "s SATISFIABLE\n";
-        out << "c " << format << "\n";
+        out << "c " << config.keyword_output_format_solution << "\n";
         out << "c s log10-estimate "
             << boost::multiprecision::log10(
                    boost::multiprecision::cpp_dec_float_100(result))
             << "\n";
-        if (vm["float"].as<bool>())
+        if (config.isFloat)
           out << "c s exact quadruple int " << result << "\n";
         else
           out << "c s exact arb int " << result << "\n";
       }
     } else {
-      assert(outFormat == "classic");
-      out << format << " ";
+      assert(config.output_format == "classic");
+      out << config.keyword_output_format_solution << " ";
       out << std::fixed << std::setprecision(50) << result << "\n";
     }
   }  // manageResult

@@ -17,13 +17,11 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
-
 #include "src/preprocs/PreprocManager.hpp"
 #include "src/problem/ProblemManager.hpp"
+#include "src/config/Config.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 class MethodManager {
  protected:
   std::clock_t currentTime;
@@ -31,22 +29,22 @@ class MethodManager {
  public:
   virtual ~MethodManager() {}
 
-  static MethodManager *makeMethodManager(po::variables_map &vm,
+  static MethodManager *makeMethodManager(Config &config,
                                           std::ostream &out);
 
-  static MethodManager *makeMethodManager(po::variables_map &vm,
+  static MethodManager *makeMethodManager(Config &config,
                                           ProblemManager *problem,
                                           std::string meth, int precision,
                                           bool isFloat, std::ostream &out);
 
   static void displayInfoVariables(ProblemManager *problem, std::ostream &out);
 
-  static ProblemManager *runPreproc(po::variables_map &vm,
+  static ProblemManager *runPreproc(Config &config,
                                     ProblemManager *initProblem,
                                     std::ostream &out,
                                     LastBreathPreproc &lastBreath);
 
-  virtual void run(po::variables_map &vm) = 0;
+  virtual void run(Config &config) = 0;
   virtual void interrupt() {}
 
   inline void initTimer() { currentTime = clock(); }

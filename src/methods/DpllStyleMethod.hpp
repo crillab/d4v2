@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -28,6 +27,7 @@
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"
 #include "src/caching/TmpEntry.hpp"
+#include "src/config/Config.hpp"
 #include "src/heuristics/PartitioningHeuristic.hpp"
 #include "src/heuristics/PhaseHeuristic.hpp"
 #include "src/heuristics/ScoringMethod.hpp"
@@ -48,7 +48,6 @@
 #include "OperationManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 template <class T>
 class Counter;
 
@@ -93,9 +92,9 @@ class DpllStyleMethod : public MethodManager, public Counter<T> {
   /**
      Constructor.
 
-     @param[in] vm, the list of options.
+     @param[in] config, the configuration.
    */
-  DpllStyleMethod(po::variables_map &vm, std::string &meth, bool isFloat,
+  DpllStyleMethod(Config &config, std::string &meth, bool isFloat,
                   ProblemManager *initProblem, std::ostream &out,
                   LastBreathPreproc &lastBreath)
       : m_problem(initProblem), m_out(nullptr) {
@@ -105,7 +104,7 @@ class DpllStyleMethod : public MethodManager, public Counter<T> {
     m_out.basic_ios<char>::rdbuf(out.rdbuf());
 
     // we create the SAT solver.
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(config, m_out);
     assert(m_solver);
     m_panicMode = lastBreath.panic;
 
@@ -115,13 +114,13 @@ class DpllStyleMethod : public MethodManager, public Counter<T> {
     m_solver->setNeedModel(true);
 
     // we initialize the object that will give info about the problem.
-    m_specs = SpecManager::makeSpecManager(vm, *m_problem, m_out);
+    m_specs = SpecManager::makeSpecManager(config, *m_problem, m_out);
     assert(m_specs);
 
     // we initialize the object used to compute score and partition.
-    m_hVar = ScoringMethod::makeScoringMethod(vm, *m_specs, *m_solver, m_out);
+    m_hVar = ScoringMethod::makeScoringMethod(config, *m_specs, *m_solver, m_out);
     m_hPhase =
-        PhaseHeuristic::makePhaseHeuristic(vm, *m_specs, *m_solver, m_out);
+        PhaseHeuristic::makePhaseHeuristic(config, *m_specs, *m_solver, m_out);
 
     // specify which variables are decisions, and which are not.
     m_isDecisionVariable.clear();
@@ -137,17 +136,17 @@ class DpllStyleMethod : public MethodManager, public Counter<T> {
     } else {
       m_out << "c [MODE] classic\n";
       m_hCutSet = PartitioningHeuristic::makePartitioningHeuristic(
-          vm, *m_specs, *m_solver, m_out);
+              config, *m_specs, *m_solver, m_out);
     }
 
     assert(m_hVar && m_hPhase && m_hCutSet);
-    m_cache = CacheManager<U>::makeCacheManager(vm, m_problem->getNbVar(),
+    m_cache = CacheManager<U>::makeCacheManager(config, m_problem->getNbVar(),
                                                 m_specs, m_out);
 
     // init the clock time.
     initTimer();
 
-    m_optCached = vm["cache-activated"].as<bool>();
+    m_optCached = config.cache_activated;
     m_callPartitioner = 0;
     m_nbDecisionNode = m_nbSplit = m_nbCallCall = 0;
     m_stampIdx = 0;
@@ -524,15 +523,15 @@ class DpllStyleMethod : public MethodManager, public Counter<T> {
   /**
      Run the DPLL style algorithm with the operation manager.
 
-     @param[in] vm, the set of options.
+     @param[in] config, the configuration.
    */
-  void run(po::variables_map &vm) {
+  void run(Config &config) {
     std::vector<Var> setOfVar;
     for (int i = 1; i <= m_specs->getNbVariable(); i++) setOfVar.push_back(i);
 
     U result = compute(setOfVar, m_out);
     printFinalStats(m_out);
-    m_operation->manageResult(result, vm, m_out);
+    m_operation->manageResult(result, config, m_out);
   }  // run
 };
 }  // namespace d4

@@ -16,16 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <boost/program_options.hpp>
-#include <src/problem/ProblemManager.hpp>
-#include <src/problem/ProblemTypes.hpp>
+
 #include <vector>
 
+#include "src/config/Config.hpp"
+#include "src/problem/ProblemManager.hpp"
+#include "src/problem/ProblemTypes.hpp"
+
 namespace d4 {
-namespace po = boost::program_options;
 class SpecManager {
  public:
-  static SpecManager *makeSpecManager(po::variables_map &vm, ProblemManager &p,
+  static SpecManager *makeSpecManager(Config &config, ProblemManager &p,
                                       std::ostream &out);
 
   virtual ~SpecManager() {}

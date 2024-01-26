@@ -17,24 +17,22 @@
  */
 #pragma once
 
-#include <boost/program_options.hpp>
-
 #include "ActivityManager.hpp"
 #include "PolarityManager.hpp"
+#include "src/config/Config.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 class WrapperSolver : public ActivityManager, public PolarityManager {
  private:
  protected:
   std::vector<char> m_isInAssumption;
 
  public:
-  static WrapperSolver *makeWrapperSolver(po::variables_map &vm,
+  static WrapperSolver *makeWrapperSolver(Config &config,
                                           std::ostream &out);
-  static WrapperSolver *makeWrapperSolverPreproc(po::variables_map &vm,
+  static WrapperSolver *makeWrapperSolverPreproc(Config &config,
                                                  std::ostream &out);
 
   virtual ~WrapperSolver() {}

@@ -8,8 +8,6 @@
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
@@ -29,15 +27,18 @@ namespace d4 {
    -> [size1] [...elts1 ...] [size2] [... elts2...] .......
 */
 class HyperGraph {
- private:
+private:
   unsigned *m_hypergraph;
   unsigned m_hypergraphCapacity;
   unsigned m_hypergraphSize;
+  int *m_cost = 0;
 
- public:
+public:
   HyperGraph();
-  HyperGraph(unsigned capacity);
+  HyperGraph(unsigned capacity, int cost = 0);
   ~HyperGraph();
+
+  inline int *getCost() { return m_cost; }
 
   inline void incSize() { m_hypergraphSize++; }
   inline void decSize() { m_hypergraphSize--; }
@@ -57,10 +58,10 @@ class HyperGraph {
   }
 
   class Iterator {
-   private:
+  private:
     HyperEdge m_hyperEdge;
 
-   public:
+  public:
     Iterator(unsigned *ptr, unsigned pos) : m_hyperEdge(pos, ptr) {}
 
     inline HyperEdge &operator*() { return m_hyperEdge; }
@@ -88,6 +89,6 @@ class HyperGraph {
   Iterator end() { return Iterator(m_hypergraph, m_hypergraphSize); }
 
   void display();
-  void init(unsigned capacity);
+  void init(unsigned capacity, unsigned cost_capacity = 0);
 };
-}  // namespace d4
+} // namespace d4

@@ -25,14 +25,14 @@
 
 namespace d4 {
 class HashString {
- public:
-  inline unsigned hash(char *key, unsigned len) {
-    return std::_Hash_bytes(key, len, 29111983);
-  }  // hash
+ private:
+  std::hash<std::string> hashString;
+  std::hash<uint64_t> hashInt;
 
-  inline unsigned hash(char *key, unsigned len, u_int64_t info) {
-    unsigned dataHash = std::_Hash_bytes(key, len, 29111983);
-    unsigned infoHash = std::_Hash_bytes(&info, sizeof(u_int64_t), 30011989);
+ public:
+  inline unsigned hash(char *key, unsigned len, uint64_t info) {
+    unsigned dataHash = hashString(std::string(key));
+    unsigned infoHash = hashInt(info);
     return dataHash ^
            (infoHash + 0x9e3779b9 + (dataHash << 6) + (dataHash >> 2));
   }  // hash

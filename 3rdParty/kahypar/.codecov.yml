@@ -1,2 +1,0 @@
-ignore:
-  - "external_tools/**/*"  # ignore external maxflow algorithms

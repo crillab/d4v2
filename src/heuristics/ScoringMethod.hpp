@@ -16,18 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <boost/program_options.hpp>
+
+#include <vector>
+
+#include <src/config/Config.hpp>
 #include <src/problem/ProblemTypes.hpp>
 #include <src/solvers/ActivityManager.hpp>
 #include <src/solvers/WrapperSolver.hpp>
 #include <src/specs/SpecManager.hpp>
-#include <vector>
 
 namespace d4 {
-namespace po = boost::program_options;
 class ScoringMethod {
  public:
-  static ScoringMethod *makeScoringMethod(po::variables_map &vm, SpecManager &p,
+  static ScoringMethod *makeScoringMethod(Config &config, SpecManager &p,
                                           ActivityManager &am,
                                           std::ostream &out);
   virtual ~ScoringMethod() { ; }

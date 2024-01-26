@@ -22,7 +22,7 @@ namespace d4 {
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] om, the occurrence manager should be dedicated to CNF.
    @param[in] s, a SAT solver.
    @pararm[in] _nbClause, the number of clauses.
@@ -30,7 +30,7 @@ namespace d4 {
    @param[in] _sumsize, the maximum size for the hyper graph.
  */
 PartitioningHeuristicBipartite::PartitioningHeuristicBipartite(
-    po::variables_map &vm, SpecManager &om, WrapperSolver &s, int nbClause,
+    Config &config, SpecManager &om, WrapperSolver &s, int nbClause,
     int nbVar, int sumSize, std::ostream &out)
     : m_om(dynamic_cast<SpecManagerCnf &>(om)), m_s(s) {
   m_nbVar = nbVar;
@@ -43,10 +43,8 @@ PartitioningHeuristicBipartite::PartitioningHeuristicBipartite(
   m_equivClass.resize(m_nbVar + 1, 0);
 
   // get the options.
-  m_reduceFormula =
-      vm["partitioning-heuristic-simplification-hyperedge"].as<bool>();
-  m_equivSimp =
-      vm["partitioning-heuristic-simplification-equivalence"].as<bool>();
+  m_reduceFormula = config.partitioning_heuristic_simplification_hyperedge;
+  m_equivSimp = config.partitioning_heuristic_simplification_equivalence;
 
   m_nbStatic = 0;
   m_nbDynamic = 0;

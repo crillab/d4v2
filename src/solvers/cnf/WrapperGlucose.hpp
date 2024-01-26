@@ -17,8 +17,9 @@
  */
 #pragma once
 
+#include "glucose/core/Solver.h"
+
 #include "../WrapperSolver.hpp"
-#include "3rdParty/glucose-3.0/core/Solver.h"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
 

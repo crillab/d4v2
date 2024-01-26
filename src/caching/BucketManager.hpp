@@ -19,7 +19,6 @@
 
 #include <string.h>
 
-#include <boost/program_options.hpp>
 #include <cassert>
 #include <deque>
 #include <iostream>
@@ -33,14 +32,13 @@
 #include "cnf/BucketManagerCnfIndex.hpp"
 #include "cnf/BucketManagerCnfSym.hpp"
 #include "src/caching/CacheManager.hpp"
+#include "src/config/Config.hpp"
 #include "src/exceptions/FactoryException.hpp"
 #include "src/problem/ProblemTypes.hpp"
 #include "src/specs/SpecManager.hpp"
 #include "src/utils/Enum.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
-
 template <class T>
 class BucketManager {
  protected:
@@ -53,54 +51,40 @@ class BucketManager {
     if (m_bucketAllocator->getCleanup()) delete m_bucketAllocator;
   }  // destructor
 
-  static BucketManager<T> *makeBucketManager(po::variables_map &vm,
+  static BucketManager<T> *makeBucketManager(Config &config,
                                              CacheManager<T> *cache,
                                              SpecManager &s,
                                              std::ostream &out) {
-    std::string css = vm["cache-store-strategy"].as<std::string>();
-    std::string ccr = vm["cache-clause-representation"].as<std::string>();
-    std::string crs = vm["cache-reduction-strategy"].as<std::string>();
-
-    unsigned long sizeFirstPage =
-        vm["cache-size-first-page"].as<unsigned long>();
-    unsigned long sizeAdditionalPage =
-        vm["cache-size-additional-page"].as<unsigned long>();
-
     out << "c [CONSTRUCTOR] Cache bucket manager:"
-        << " storage(" << css << ") "
-        << " representation(" << ccr << ") "
-        << " size_first_page(" << sizeFirstPage << ")"
-        << " size_additional_page(" << sizeAdditionalPage << ")"
+        << " storage(" << config.cache_store_strategy << ") "
+        << " representation(" << config.cache_clause_representation << ") "
+        << " size_first_page(" << config.cache_size_first_page << ")"
+        << " size_additional_page(" << config.cache_size_additional_page << ")"
         << "\n";
 
     ModeStore mode = ALL;
-    if (css == "not-binary") mode = NB;
-    if (css == "not-touched") mode = NT;
+    if (config.cache_store_strategy == "not-binary") mode = NB;
+    if (config.cache_store_strategy == "not-touched") mode = NT;
 
     SpecManagerCnf &scnf = dynamic_cast<SpecManagerCnf &>(s);
-    if (ccr == "clause")
-      return new BucketManagerCnfCl<T>(scnf, cache, mode, sizeFirstPage,
-                                       sizeAdditionalPage);
-    if (ccr == "sym")
-      return new BucketManagerCnfSym<T>(scnf, cache, mode, sizeFirstPage,
-                                        sizeAdditionalPage);
-    if (ccr == "index")
-      return new BucketManagerCnfIndex<T>(scnf, cache, mode, sizeFirstPage,
-                                          sizeAdditionalPage);
-    if (ccr == "combi") {
-      unsigned limitNbVarSym =
-          vm["cache-clause-representation-combi-limitVar-sym"].as<unsigned>();
-      unsigned limitNbVarIndex =
-          vm["cache-clause-representation-combi-limitVar-index"].as<unsigned>();
-
+    if (config.cache_clause_representation == "clause")
+      return new BucketManagerCnfCl<T>(scnf, cache, mode, config.cache_size_first_page,
+                                       config.cache_size_additional_page);
+    if (config.cache_clause_representation == "sym")
+      return new BucketManagerCnfSym<T>(scnf, cache, mode, config.cache_size_first_page,
+                                        config.cache_size_additional_page);
+    if (config.cache_clause_representation == "index")
+      return new BucketManagerCnfIndex<T>(scnf, cache, mode, config.cache_size_first_page,
+                                          config.cache_size_additional_page);
+    if (config.cache_clause_representation == "combi") {
       out << "c [CONSTRUCTOR] Cache bucket manager mixed strategy:"
-          << " limit #var sym(" << limitNbVarSym << ") "
-          << " limit #var index (" << limitNbVarIndex << ") "
+          << " limit #var sym(" << config.cache_clause_representation_combi_limitVar_sym << ") "
+          << " limit #var index (" << config.cache_clause_representation_combi_limitVar_index << ") "
           << "\n";
 
-      return new BucketManagerCnfCombi<T>(scnf, cache, mode, sizeFirstPage,
-                                          sizeAdditionalPage, limitNbVarSym,
-                                          limitNbVarIndex);
+      return new BucketManagerCnfCombi<T>(scnf, cache, mode, config.cache_size_first_page,
+                                          config.cache_size_additional_page, config.cache_clause_representation_combi_limitVar_sym,
+                                          config.cache_clause_representation_combi_limitVar_index);
     }
 
     throw(

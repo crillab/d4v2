@@ -30,38 +30,50 @@ HyperGraph::HyperGraph()
 
    @param[in] capacity, the max capacity.
 */
-HyperGraph::HyperGraph(unsigned capacity) : m_hypergraphCapacity(capacity) {
+HyperGraph::HyperGraph(unsigned capacity, int cost_capacity)
+    : m_hypergraphCapacity(capacity) {
   m_hypergraph = new unsigned[capacity];
+  if (cost_capacity)
+    m_cost = new int[cost_capacity];
+
   m_hypergraphSize = 0;
-}  // constructor
+} // constructor
 
 /**
    Free the allocated memory.
  */
 HyperGraph::~HyperGraph() {
-  if (m_hypergraph) delete[] m_hypergraph;
-}  // destructor
+  if (m_hypergraph)
+    delete[] m_hypergraph;
+  if (m_cost)
+    delete[] m_cost;
+} // destructor
 
 /**
    Print out the hyper graph.
 */
 void HyperGraph::display() {
   for (auto it : *this) {
-    for (auto e : it) std::cout << e << " ";
+    for (auto e : it)
+      std::cout << e << " ";
     std::cout << "\n";
   }
-}  // displayHyperGraph
+} // displayHyperGraph
 
 /**
    Initialize the data structure.
 
    @param[in] capacity, the max capacity.
  */
-void HyperGraph::init(unsigned capacity) {
-  if (m_hypergraph) delete[] m_hypergraph;
+void HyperGraph::init(unsigned capacity, unsigned cost_capacity) {
+  if (m_hypergraph)
+    delete[] m_hypergraph;
   m_hypergraphCapacity = capacity;
   m_hypergraph = new unsigned[capacity];
+  if (cost_capacity) {
+    m_cost = new int[cost_capacity];
+  }
   m_hypergraphSize = 0;
-}  // init
+} // init
 
-}  // namespace d4
+} // namespace d4

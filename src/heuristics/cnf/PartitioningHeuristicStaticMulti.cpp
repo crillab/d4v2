@@ -23,14 +23,14 @@ namespace d4 {
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
 */
 PartitioningHeuristicStaticMulti::PartitioningHeuristicStaticMulti(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, std::ostream &out)
+        Config &config, WrapperSolver &s, SpecManager &om, std::ostream &out)
     : PartitioningHeuristicStaticMulti(
-          vm, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
+          config, s, om, dynamic_cast<SpecManagerCnf &>(om).getNbClause(),
           dynamic_cast<SpecManagerCnf &>(om).getNbVariable(),
           dynamic_cast<SpecManagerCnf &>(om).getSumSizeClauses(), out) {
 
@@ -39,7 +39,7 @@ PartitioningHeuristicStaticMulti::PartitioningHeuristicStaticMulti(
 /**
    Constructor.
 
-   @param[in] vm, the option list.
+   @param[in] config, the configuration.
    @param[in] s, a wrapper on a solver.
    @param[in] om, a structure manager.
    @param[in] nbClause, the number of clauses.
@@ -47,14 +47,14 @@ PartitioningHeuristicStaticMulti::PartitioningHeuristicStaticMulti(
    @param[in] sumSize, which give the number of literals.
  */
 PartitioningHeuristicStaticMulti::PartitioningHeuristicStaticMulti(
-    po::variables_map &vm, WrapperSolver &s, SpecManager &om, int nbClause,
+        Config &config, WrapperSolver &s, SpecManager &om, int nbClause,
     int nbVar, int sumSize, std::ostream &out)
-    : PartitioningHeuristicStatic(vm, s, om, nbClause, nbVar, sumSize, out) {
+    : PartitioningHeuristicStatic(config, s, om, nbClause, nbVar, sumSize, out) {
   m_partitionStaticDual = new PartitioningHeuristicStaticSingleDual(
-      vm, s, om, nbClause, nbVar, sumSize, out);
+          config, s, om, nbClause, nbVar, sumSize, out);
 
   m_partitionStaticPrimal = new PartitioningHeuristicStaticSinglePrimal(
-      vm, s, om, nbClause, nbVar, sumSize, out);
+          config, s, om, nbClause, nbVar, sumSize, out);
 
   m_partitionStaticUsed = NULL;
 }  // constructor

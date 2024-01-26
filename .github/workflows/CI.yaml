@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  - push
+
+env:
+  CMAKE_GENERATOR: Ninja
+  CMAKE_C_COMPILER_LAUNCHER: sccache
+  CMAKE_CXX_COMPILER_LAUNCHER: sccache
+  SCCACHE_GHA_ENABLED: true
+
+jobs:
+  Build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - os: linux
+            runner: ubuntu-latest
+            shell: bash
+          - os: macos
+            runner: macos-latest
+            shell: bash
+          - os: windows
+            runner: windows-latest
+            shell: msys2
+        compiler:
+          - cc: gcc
+            cxx: g++
+            msystem: ucrt64
+          - cc: clang
+            cxx: clang++
+            msystem: clang64
+        solver:
+          - minisat
+          - glucose
+        exclude:
+          - target: { os: macos }
+            compiler: { cc: gcc }
+    runs-on: ${{ matrix.target.runner }}
+    defaults:
+      run:
+        shell: ${{ matrix.target.shell }} {0}
+    env:
+      CC: ${{ matrix.compiler.cc }}
+      CXX: ${{ matrix.compiler.cxx }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup MSYS2
+        if: ${{ matrix.target.os == 'windows' }}
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          msystem: ${{ matrix.compiler.msystem }}
+          pacboy: git cmake:p ninja:p
+      - name: Install dependencies
+        if: ${{ matrix.target.os == 'linux' }}
+        run: sudo apt install ninja-build libboost-program-options-dev libhwloc-dev libtbb-dev
+      - name: Install dependencies
+        if: ${{ matrix.target.os == 'macos' }}
+        run: brew install ninja boost hwloc tbb
+      - name: Install dependencies
+        if: ${{ matrix.target.os == 'windows' }}
+        run: |
+          pacboy -S --noconfirm toolchain:p boost:p gmp:p hwloc:p tbb:p
+          mv /${{ matrix.compiler.msystem }}/lib/libtbb12.dll.a /${{ matrix.compiler.msystem }}/lib/libtbb.dll.a
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Setup environment
+        run: |
+          export BUILD_ROOT=$(mktemp -d)
+          echo BUILD_ROOT=$BUILD_ROOT >> $GITHUB_ENV
+          echo BUILD_ROOT_EXPORT=$(python3 -c "import os; print(os.environ['BUILD_ROOT'])") >> $GITHUB_ENV
+      - name: Build Mt-KaHyPar
+        run: |
+          cd $(mktemp -d)
+          git clone --recursive https://github.com/kahypar/mt-kahypar.git .
+          cmake -B build -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT -D MT_KAHYPAR_DISABLE_BOOST=true
+          cmake --build build --target mtkahypar
+          cmake --install build
+          mkdir -p $BUILD_ROOT/licenses/mt-kahypar
+          cp LICENSE $BUILD_ROOT/licenses/mt-kahypar/
+      # TODO: currently, macOS is only supported on master, move below clone to check out latest version when released.
+#          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
+      - name: Build glucose
+        if: ${{ matrix.solver == 'glucose' }}
+        run: |
+          cd 3rdParty/glucose-3.0
+          cmake -B build -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT
+          cmake --build build --target glucose
+          cmake --install build
+      - name: Configure
+        run: >-
+          cmake -B build
+          -D CMAKE_INSTALL_PREFIX=$BUILD_ROOT
+          -D MtKaHyPar_ROOT=$BUILD_ROOT
+          -D glucose_ROOT=$BUILD_ROOT
+          -D D4_SOLVER=${{ matrix.solver }}
+          -D D4_PREPROC_SOLVER=${{ matrix.solver }}
+      - name: Build
+        run: cmake --build build
+      - name: Install
+        run: cmake --install build
+      - name: Package
+        if: ${{ matrix.target.os == 'windows' }}
+        run: |
+          ./package-msys.bash $BUILD_ROOT $BUILD_ROOT/bin/*
+          rm -f $BUILD_ROOT/bin/b2
+          rm -f $BUILD_ROOT/bin/bjam
+          rm -f $BUILD_ROOT/bin/glucose
+          rm -f $BUILD_ROOT/bin/hwloc*
+          rm -f $BUILD_ROOT/bin/lstopo*
+          rm -rf $BUILD_ROOT/lib
+      - name: Package
+        run: |
+          rm -rf $BUILD_ROOT/include
+          rm -rf $BUILD_ROOT/share
+          mkdir -p $BUILD_ROOT/licenses/d4
+          cp LICENSE $BUILD_ROOT/licenses/d4/
+          cp doc/built/${{ matrix.target.os }}.md $BUILD_ROOT/README.md
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: d4-${{ matrix.target.os }}-${{ matrix.compiler.cc }}-${{ matrix.solver }}
+          path: ${{ env.BUILD_ROOT_EXPORT }}

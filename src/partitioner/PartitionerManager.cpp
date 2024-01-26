@@ -17,33 +17,18 @@
  */
 #include "PartitionerManager.hpp"
 
-#include "PartitionerKahypar.hpp"
-#include "PartitionerPatoh.hpp"
-#include "src/exceptions/FactoryException.hpp"
+#include "PartitionerKahyparMT.hpp"
 
 namespace d4 {
 
 /**
    Create a partitioner.
-
-   @param[in] vm, the list of options.
-   @param[in] s, a view on the problem's structure.
-
-   \return a partioner if the options are ocrrect, NULL otherwise.
+   \return a partitioner if the options are correct, NULL otherwise.
  */
-PartitionerManager *PartitionerManager::makePartitioner(po::variables_map &vm,
-                                                        unsigned maxNodes,
+PartitionerManager *PartitionerManager::makePartitioner(unsigned maxNodes,
                                                         unsigned maxEdges,
                                                         unsigned maxSumEdgeSize,
                                                         std::ostream &out) {
-  std::string meth = vm["partitioning-heuristic-partitioner"].as<std::string>();
-  ;
-
-  if (meth == "patoh")
-    return new PartitionerPatoh(maxNodes, maxEdges, maxSumEdgeSize, out);
-  if (meth == "kahypar")
-    return new PartitionerKahypar(maxNodes, maxEdges, maxSumEdgeSize, out);
-
-  throw(FactoryException("Cannot create a Partitioner", __FILE__, __LINE__));
+  return new PartitionerKahyparMT(maxNodes, maxEdges, maxSumEdgeSize, out);
 }  // makePartitioner
 }  // namespace d4

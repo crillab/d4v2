@@ -16,20 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include <boost/program_options.hpp>
+
+#include <src/config/Config.hpp>
 #include <src/problem/ProblemTypes.hpp>
 #include <src/solvers/PolarityManager.hpp>
 #include <src/specs/SpecManager.hpp>
 
 namespace d4 {
-namespace po = boost::program_options;
 class PhaseHeuristic {
  protected:
   bool isReversed;
 
  public:
   virtual ~PhaseHeuristic() {}
-  static PhaseHeuristic *makePhaseHeuristic(po::variables_map &vm,
+  static PhaseHeuristic *makePhaseHeuristic(Config &config,
                                             SpecManager &s, PolarityManager &p,
                                             std::ostream &out);
 

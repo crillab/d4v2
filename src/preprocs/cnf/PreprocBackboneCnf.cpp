@@ -17,8 +17,6 @@
  */
 #include "PreprocBackboneCnf.hpp"
 
-#include <bits/types/clock_t.h>
-
 #include <ctime>
 
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
@@ -28,11 +26,11 @@ namespace d4 {
 /**
    The constructor.
 
-   @param[in] vm, the options used (solver).
+   @param[in] config, the configuration.
  */
-PreprocBackboneCnf::PreprocBackboneCnf(po::variables_map &vm,
+PreprocBackboneCnf::PreprocBackboneCnf(Config &config,
                                        std::ostream &out) {
-  ws = WrapperSolver::makeWrapperSolverPreproc(vm, out);
+  ws = WrapperSolver::makeWrapperSolverPreproc(config, out);
 }  // constructor
 
 /**
