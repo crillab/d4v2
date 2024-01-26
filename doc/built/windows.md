@@ -1,7 +1,7 @@
 # d4
 
 This is a built version of d4.
-The project is licensed under the LGPL-2.1 and the source can be found at https://github.com/SoftVarE-Group/d4v2
+The project is licensed under the LGPL-2.1 and the source can be found at https://github.com/crillab/d4v2
 
 All dependencies are in `bin`.
 
