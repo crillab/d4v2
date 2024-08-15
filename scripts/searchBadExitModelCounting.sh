@@ -8,9 +8,9 @@ CNF_GENERATOR="$ROOT_PATH/cnfuzz"
 SOLVER="$ROOT_PATH/minisat"
 
 TIMEOUT=$2
-if [ "$TIMEOUT" == "" ]; then TIMEOUT=1; fi
+if [ "$TIMEOUT" == "" ]; then TIMEOUT=2; fi
 
-LIMIT_SIZE=300
+LIMIT_SIZE=50
 
 isExecutableReady()
 {
@@ -32,6 +32,18 @@ generateSatisfiableCNF()
         $SOLVER /tmp/test.cnf > /dev/null
         ret=$?
     done
+
+
+    rdm=$(($RANDOM % 40))
+    nbVar=$(grep "p cnf" /tmp/test.cnf | cut -d ' ' -f3)
+    tab=$(seq 1 $nbVar)
+    
+    rdm=100
+
+    cpt=3
+    addedClauses=$(grep "p cnf" /tmp/test.cnf | cut -d ' ' -f4)
+    
+    sed -i "s/p cnf .*/p cnf $nbVar $addedClauses/" /tmp/test.cnf    
     echo "/tmp/test.cnf"
 }
 
@@ -46,7 +58,7 @@ while [ true ]
 do
     printf "number of instances tested %d\r" "$cpt" 
 
-    benchName=$(generateSatisfiableCNF)
+    benchName=$(generateSatisfiableCNF)    
     timeout $TIMEOUT $1 $benchName > /dev/null 2>/dev/null
 
     code=$?

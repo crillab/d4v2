@@ -3,17 +3,18 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
@@ -21,19 +22,12 @@
 
 #include "../SpecManager.hpp"
 #include "DataOccurrence.hpp"
+#include "SpecClauseInfo.hpp"
+#include "src/options/cache/OptionBucketManager.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
-#include "src/utils/Enum.hpp"
 
 namespace d4 {
-struct SpecClauseInfo {
-  unsigned nbSat;
-  unsigned nbUnsat;
-  Lit watcher;
-
-  SpecClauseInfo() : nbSat(0), nbUnsat(0), watcher(lit_Undef) { ; }
-};
-
 struct InfoCluster {
   Var parent;
   unsigned size;
@@ -72,6 +66,13 @@ class SpecManagerCnf : public SpecManager {
   int computeConnectedComponent(std::vector<std::vector<Var>> &varConnected,
                                 std::vector<Var> &setOfVar,
                                 std::vector<Var> &freeVar) override;
+
+  void connectedToLit(Lit l, std::vector<int> &v,
+                      std::vector<Var> &varComponent, int nbComponent);
+
+  int computeConnectedComponentTargeted(
+      std::vector<std::vector<Var>> &varConnected, std::vector<Var> &setOfVar,
+      std::vector<bool> &isProjected, std::vector<Var> &freeVar) override;
 
   void showFormula(std::ostream &out) override;
   void showCurrentFormula(std::ostream &out) override;
@@ -136,6 +137,8 @@ class SpecManagerCnf : public SpecManager {
     return m_clauses[idx].size() - m_infoClauses[idx].nbUnsat;
   }
 
+  inline std::vector<std::vector<Lit>> &getClauses() { return m_clauses; }
+
   inline std::vector<Lit> &getClause(int idx) {
     assert((unsigned)idx < m_clauses.size());
     return m_clauses[idx];
@@ -174,12 +177,13 @@ class SpecManagerCnf : public SpecManager {
 
   inline IteratorIdxClause getVecIdxClause(Lit l, ModeStore mode) {
     assert(l.intern() < m_occurrence.size());
-    if (mode == NT) return m_occurrence[l.intern()].getNotBinClauses();
-    if (mode == ALL) return m_occurrence[l.intern()].getClauses();
+    if (mode == CACHE_NT) return m_occurrence[l.intern()].getNotBinClauses();
+    if (mode == CACHE_ALL) return m_occurrence[l.intern()].getClauses();
     return m_occurrence[l.intern()].getBinClauses();
   }
 
   inline void showOccurenceList(std::ostream &out) {
+    printf("Occurence list\n");
     for (unsigned i = 0; i < m_occurrence.size(); i++) {
       if (!m_occurrence[i].nbBin && !m_occurrence[i].nbNotBin) continue;
       out << ((i & 1) ? "-" : "") << (i >> 1) << " --> [ ";
@@ -190,5 +194,7 @@ class SpecManagerCnf : public SpecManager {
       out << " ]\n";
     }
   }
+
+  inline ProblemInputType getProblemInputType() override { return PB_CNF; }
 };
 }  // namespace d4

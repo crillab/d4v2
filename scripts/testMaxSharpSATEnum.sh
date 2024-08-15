@@ -8,13 +8,13 @@ SOLVER="$ROOT_PATH/minisat"
 
 cp $1 /tmp/bench.cnf
 
-#grep "c " /tmp/1test.cnf >> /tmp/bench.cnf
+grep "c " /tmp/1test.cnf >> /tmp/bench.cnf
 
 $SOLVER /tmp/bench.cnf > /dev/null
 if [ $? -ne 10 ]; then exit 0; fi
 
 MODEL_COUNTER="../build/d4_debug --float 1 -m counting -i"
-TESTED_METHOD="../build/d4_debug --float 1 -m max#sat -i"
+TESTED_METHOD="../build/d4_debug --float 1 -m ere -i"
 
 # get the max variables.
 maxVar=$(grep "c max" /tmp/bench.cnf | cut -d ' ' -f3- | awk 'NF{NF-=1};1')

@@ -3,17 +3,18 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include "WrapperGlucose.hpp"
@@ -27,8 +28,9 @@
 #include "3rdParty/glucose-3.0/core/Solver.h"
 #include "3rdParty/glucose-3.0/core/SolverTypes.h"
 #include "3rdParty/glucose-3.0/mtl/Vec.h"
+#include "src/problem/CnfMatrix.hpp"
+#include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
-#include "src/problem/cnf/ProblemManagerCnf.hpp"
 
 namespace d4 {
 /**
@@ -39,15 +41,11 @@ namespace d4 {
  */
 void WrapperGlucose::initSolver(ProblemManager &p) {
   try {
-    ProblemManagerCnf &pcnf = dynamic_cast<ProblemManagerCnf &>(p);
-
-    // force glucose to be in incremental mode in order to restart just after
-    // the assumptions.
-    // s.setIncrementalMode();
+    CnfMatrix &pcnf = dynamic_cast<CnfMatrix &>(p);
 
     // say to the solver we have pcnf.getNbVar() variables.
-    while ((unsigned)s.nVars() <= pcnf.getNbVar()) s.newVar();
-    m_model.resize(pcnf.getNbVar() + 1, l_Undef);
+    while ((unsigned)s.nVars() <= p.getNbVar()) s.newVar();
+    m_model.resize(p.getNbVar() + 1, l_Undef);
 
     // load the clauses
     std::vector<std::vector<Lit>> &clauses = pcnf.getClauses();
@@ -57,8 +55,9 @@ void WrapperGlucose::initSolver(ProblemManager &p) {
       s.addClause(lits);
     }
   } catch (std::bad_cast &bc) {
-    std::cerr << "bad_cast caught: " << bc.what() << '\n';
-    std::cerr << "A CNF formula was expeted\n";
+    std::cerr << "c bad_cast caught: " << bc.what() << '\n';
+    std::cerr << "c A CNF formula was expeted\n";
+    assert(0);
   }
 
   m_activeModel = false;
@@ -134,6 +133,15 @@ double WrapperGlucose::getActivity(Var v) {
 double WrapperGlucose::getCountConflict(Var v) {
   return s.scoreActivity[v];
 }  // getCountConflict
+
+/**
+ * @brief decayCountConflict implementation.
+ *
+ */
+void WrapperGlucose::decayCountConflict() {
+  for (unsigned i = 0; i < s.scoreActivity.size(); i++)
+    s.scoreActivity[i] = s.scoreActivity[i] / 2;
+}  // decayCountConflict
 
 /**
  * @brief Set the count conflict in the solver.
@@ -372,5 +380,5 @@ void WrapperGlucose::popAssumption(unsigned count) {
 }  // popAssumption
 
 inline unsigned WrapperGlucose::getNbConflict() { return s.conflicts; }
-
+inline bool WrapperGlucose::isUnsat() { return !s.okay(); }
 }  // namespace d4

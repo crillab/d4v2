@@ -3,17 +3,18 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
@@ -57,6 +58,13 @@ class DecisionDNNFOperation : public Operation<T, U> {
   ~DecisionDNNFOperation() { delete m_nodeManager; }  // destructor
 
   /**
+   * @brief Get the Node Manager object/
+   *
+   * @return the node manager.
+   */
+  inline NodeManager<T> *getNodeManager() { return m_nodeManager; }
+
+  /**
      Create top node and returns it.
 
      \return a top node.
@@ -79,8 +87,14 @@ class DecisionDNNFOperation : public Operation<T, U> {
      \return the product of each element of elts.
   */
   U manageDeterministOr(DataBranch<U> *elts, unsigned size) {
-    assert(size == 2);
-    return m_nodeManager->makeBinaryDeterministicOrNode(elts[0], elts[1]);
+    if (size == 1) return m_nodeManager->makeUnaryNode(elts[0]);
+
+    U ret = m_nodeManager->makeBinaryDeterministicOrNode(elts[0], elts[1]);
+    for (unsigned i = 2; i < size; i++) {
+      DataBranch<U> tmp = {ret, std::vector<Lit>(), std::vector<Var>()};
+      ret = m_nodeManager->makeBinaryDeterministicOrNode(tmp, elts[i]);
+    }
+    return ret;
   }  // manageDeterministOr
 
   /**
@@ -129,69 +143,12 @@ class DecisionDNNFOperation : public Operation<T, U> {
   }  // manageBranch
 
   /**
-     Manage the final result compute.
+   Compute the number of model on the dDNNF.
 
-     @param[in] result, the result we are considering.
-     @param[in] vm, a set of options that describes what we want to do on the
-     given result.
-     @param[in] out, the output stream.
-  */
-  void manageResult(U &result, po::variables_map &vm, std::ostream &out) {
-    if (vm.count("dump-ddnnf")) {
-      std::ofstream outFile;
-      std::string fileName = vm["dump-ddnnf"].as<std::string>();
-      outFile.open(fileName);
-      m_nodeManager->printNNF(result, outFile);
-      outFile.close();
-    } else if (vm.count("query")) {
-      std::vector<Lit> query;
-      std::vector<ValueVar> fixedValue(m_problem->getNbVar() + 1,
-                                       ValueVar::isNotAssigned);
+   @param[in] root, the root of the dDNNF.
 
-      std::string fileName = vm["query"].as<std::string>();
-      QueryManager queryManager(fileName);
-      TypeQuery typeQuery = TypeQuery::QueryEnd;
-
-      do {
-        typeQuery = queryManager.next(query);
-        for (auto &l : query) {
-          if ((unsigned)l.var() >= fixedValue.size()) continue;
-          fixedValue[l.var()] =
-              (l.sign()) ? ValueVar::isFalse : ValueVar::isTrue;
-        }
-
-        if (typeQuery == TypeQuery::QueryCounting) {
-          out << "s " << std::fixed
-              << m_nodeManager->computeNbModels(result, fixedValue, *m_problem)
-              << "\n";
-        } else if (typeQuery == TypeQuery::QueryDecision) {
-          bool res = m_nodeManager->isSAT(result, fixedValue);
-          out << "s " << ((res) ? "SAT" : "UNS") << "\n";
-        }
-
-        for (auto &l : query) {
-          if ((unsigned)l.var() >= fixedValue.size()) continue;
-          fixedValue[l.var()] = ValueVar::isNotAssigned;
-        }
-      } while (typeQuery != TypeQuery::QueryEnd);
-    } else {
-      std::vector<ValueVar> fixedValue(m_problem->getNbVar() + 1,
-                                       ValueVar::isNotAssigned);
-      out << "s " << std::fixed
-          << m_nodeManager->computeNbModels(result, fixedValue, *m_problem)
-          << "\n";
-    }
-
-    m_nodeManager->deallocate(result);
-  }  // manageResult
-
-  /**
-     Compute the number of model on the dDNNF.
-
-     @param[in] root, the root of the dDNNF.
-
-     \return the number of models.
-   */
+   \return the number of models.
+ */
   T count(U &root) {
     std::vector<ValueVar> fixedValue(m_problem->getNbVar() + 1,
                                      ValueVar::isNotAssigned);

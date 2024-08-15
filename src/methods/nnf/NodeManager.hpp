@@ -3,17 +3,18 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
@@ -133,7 +134,7 @@ class NodeManagerTyped : public NodeManager<T> {
    */
   T computeNbModels(Node<T> *node, std::vector<ValueVar> &fixedValue,
                     ProblemManager &problem) {
-    T(*func[TypeNode::count])
+    T(*func[TypeNode::TypeNodeCount])
     (Node<T> * node, T(*t[])(), std::vector<ValueVar> &, ProblemManager &,
      unsigned);
 
@@ -145,6 +146,8 @@ class NodeManagerTyped : public NodeManager<T> {
     func[TypeNode::TypeTrueNode] = TrueNode<T>::computeNbModels;
 
     m_globalStamp++;
+
+    assert(node->header.typeNode < TypeNodeCount);
     return func[node->header.typeNode](node, (T(**)())func, fixedValue, problem,
                                        m_globalStamp);
   }  // computeNbModels
@@ -158,8 +161,8 @@ class NodeManagerTyped : public NodeManager<T> {
      \return true if the formula conditioned is satisfiable, false otherwise.
   */
   bool isSAT(Node<T> *node, std::vector<ValueVar> &fixedValue) {
-    bool (*func[TypeNode::count])(Node<T> * node, bool (*t[])(),
-                                  std::vector<ValueVar> &, unsigned);
+    bool (*func[TypeNode::TypeNodeCount])(Node<T> *node, bool (*t[])(),
+                                          std::vector<ValueVar> &, unsigned);
 
     func[TypeNode::TypeDecAndNode] = DecomposableAndNode<T, U>::isSAT;
     func[TypeNode::TypeIteNode] = BinaryDeterministicOrNode<T, U>::isSAT;
@@ -173,8 +176,8 @@ class NodeManagerTyped : public NodeManager<T> {
   }  // isSAT
 
   void printNNF(Node<T> *node, std::ostream &out) {
-    unsigned (*func[TypeNode::count])(Node<T> * node, unsigned (*t[])(),
-                                      std::ostream &, unsigned &, unsigned);
+    unsigned (*func[TypeNode::TypeNodeCount])(
+        Node<T> *node, unsigned (*t[])(), std::ostream &, unsigned &, unsigned);
     func[TypeNode::TypeDecAndNode] = DecomposableAndNode<T, U>::printNNF;
     func[TypeNode::TypeIteNode] = BinaryDeterministicOrNode<T, U>::printNNF;
     func[TypeNode::TypeUnaryNode] = UnaryNode<T, U>::printNNF;
@@ -194,7 +197,8 @@ class NodeManagerTyped : public NodeManager<T> {
      @param[in] node, the root node of the graph we want to free the members.
    */
   void deallocate(Node<T> *node) {
-    void (*func[TypeNode::count])(Node<T> * node, void (*t[])(), unsigned int);
+    void (*func[TypeNode::TypeNodeCount])(Node<T> *node, void (*t[])(),
+                                          unsigned int);
 
     func[TypeNode::TypeDecAndNode] = DecomposableAndNode<T, U>::deallocate;
     func[TypeNode::TypeIteNode] = BinaryDeterministicOrNode<T, U>::deallocate;

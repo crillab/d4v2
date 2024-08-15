@@ -3,17 +3,18 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include "ProblemManagerCnf.hpp"
@@ -27,9 +28,23 @@ namespace d4 {
 
    @param[in] nameFile, parse the instance from a file
  */
-ProblemManagerCnf::ProblemManagerCnf(std::string &nameFile) {
+ProblemManagerCnf::ProblemManagerCnf(const std::string &nameFile) {
   ParserDimacs parser;
   m_nbVar = parser.parse_DIMACS(nameFile, this);
+
+  m_weightVar.resize(m_nbVar + 1, 0);
+  for (unsigned i = 0; i <= m_nbVar; i++)
+    m_weightVar[i] = m_weightLit[i << 1] + m_weightLit[(i << 1) + 1];
+}  // constructor
+
+/**
+   Constructor.
+
+   @param[in] fd, parse the instance from the file descriptor.
+ */
+ProblemManagerCnf::ProblemManagerCnf(const int fd, bool keepOpen) {
+  ParserDimacs parser;
+  m_nbVar = parser.parse_DIMACS(fd, this, keepOpen);
 
   m_weightVar.resize(m_nbVar + 1, 0);
   for (unsigned i = 0; i <= m_nbVar; i++)
@@ -65,9 +80,36 @@ ProblemManagerCnf::ProblemManagerCnf(ProblemManager *problem) {
  * @param weightVar, the weights associate with the variables (sum of weight
    of the lit)
  * @param selected, the projected variables.
+ * @param maxVar is the set of existential variables.
+ * @param indVar is the set of randomized variables.
  */
-ProblemManagerCnf::ProblemManagerCnf(int nbVar, std::vector<double> &weightLit,
-                                     std::vector<double> &weightVar,
+ProblemManagerCnf::ProblemManagerCnf(int nbVar,
+                                     std::vector<mpz::mpf_float> &weightLit,
+                                     std::vector<mpz::mpf_float> &weightVar,
+                                     std::vector<Var> &selected,
+                                     std::vector<Var> &maxVar,
+                                     std::vector<Var> &indVar) {
+  m_nbVar = nbVar;
+  m_weightLit = weightLit;
+  m_weightVar = weightVar;
+  m_selected = selected;
+  m_maxVar = maxVar;
+  m_indVar = indVar;
+  m_isUnsat = false;
+}  // constructor
+
+/**
+ * @brief Construct a new Problem Manager Cnf:: Problem Manager Cnf object
+ *
+ * @param nbVar, the number of variables.
+ * @param weightLit, the weights associate with the literals.
+ * @param weightVar, the weights associate with the variables (sum of weight
+   of the lit)
+ * @param selected, the projected variables.
+ */
+ProblemManagerCnf::ProblemManagerCnf(int nbVar,
+                                     std::vector<mpz::mpf_float> &weightLit,
+                                     std::vector<mpz::mpf_float> &weightVar,
                                      std::vector<Var> &selected) {
   m_nbVar = nbVar;
   m_weightLit = weightLit;
@@ -134,7 +176,7 @@ ProblemManager *ProblemManagerCnf::getConditionedFormula(
     }
 
     // add the simplified clause if needed.
-    if (!isSAT) ret->getClauses().push_back(cl);
+    if (!isSAT) ret->getClauses().push_back(scl);
   }
 
   return ret;
@@ -153,6 +195,10 @@ void ProblemManagerCnf::display(std::ostream &out) {
     out << l << "(" << m_weightLit[l.intern()] << ") ";
     out << ~l << "(" << m_weightLit[(~l).intern()] << ") ";
   }
+  out << "\n";
+
+  out << "selected var: ";
+  for (auto v : getSelectedVar()) out << v << " ";
   out << "\n";
 
   out << "p cnf " << m_nbVar << " " << m_clauses.size() << "\n";

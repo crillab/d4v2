@@ -3,33 +3,39 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
 #include <bits/stdint-uintn.h>
-#include <boost/program_options.hpp>
+#include <sys/types.h>
+
 #include <ctime>
 #include <iomanip>
 #include <iostream>
-#include <sys/types.h>
 
+#include "Counter.hpp"
+#include "DataBranch.hpp"
+#include "MethodManager.hpp"
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"
 #include "src/caching/TmpEntry.hpp"
-#include "src/heuristics/PartitioningHeuristic.hpp"
-#include "src/heuristics/PhaseHeuristic.hpp"
-#include "src/heuristics/ScoringMethod.hpp"
+#include "src/heuristics/partitioning/PartitioningHeuristic.hpp"
+#include "src/heuristics/phaseSelection/PhaseHeuristic.hpp"
+#include "src/heuristics/scoringVariable/ScoringMethod.hpp"
+#include "src/methods/nnf/Node.hpp"
+#include "src/options/methods/OptionMinSharpSatMethod.hpp"
 #include "src/preprocs/PreprocManager.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
@@ -37,15 +43,12 @@
 #include "src/specs/SpecManager.hpp"
 #include "src/utils/MemoryStat.hpp"
 
-#include "Counter.hpp"
-#include "DataBranch.hpp"
-#include "MethodManager.hpp"
-
 namespace d4 {
-namespace po = boost::program_options;
-template <class T> class Counter;
+template <class T>
+class Counter;
 
-template <class T> class MinSharpSAT : public MethodManager {
+template <class T>
+class MinSharpSAT : public MethodManager {
   enum TypeDecision { NO_DEC, EXIST_DEC, MAX_DEC };
 
   struct MinSharpSatResult {
@@ -53,7 +56,7 @@ template <class T> class MinSharpSAT : public MethodManager {
     u_int8_t *valuation;
   };
 
-private:
+ private:
   const unsigned NB_SEP = 118;
 
   bool optDomConst;
@@ -62,7 +65,8 @@ private:
   unsigned m_nbCallCall;
   unsigned m_nbSplit;
   unsigned m_nbDecisionNode;
-  unsigned m_optCached;
+  unsigned m_optCachedMin;
+  unsigned m_optCachedInd;
   unsigned m_stampIdx;
   bool m_isProjectedMode;
 
@@ -82,8 +86,10 @@ private:
   ProblemManager *m_problem;
   WrapperSolver *m_solver;
   SpecManager *m_specs;
-  ScoringMethod *m_hVar;
-  PhaseHeuristic *m_hPhase;
+  ScoringMethod *m_hVarMin;
+  PhaseHeuristic *m_hPhaseMin;
+  ScoringMethod *m_hVarInd;
+  PhaseHeuristic *m_hPhaseInd;
 
   CacheManager<T> *m_cacheInd;
   CacheManager<MinSharpSatResult> *m_cacheMax;
@@ -91,15 +97,14 @@ private:
   std::ostream m_out;
   bool m_panicMode;
 
-public:
+ public:
   /**
      Constructor.
 
-     @param[in] vm, the list of options.
+     @param[in] options, the list of options.
    */
-  MinSharpSAT(po::variables_map &vm, std::string &meth, bool isFloat,
-              ProblemManager *initProblem, std::ostream &out,
-              LastBreathPreproc &lastBreath)
+  MinSharpSAT(const OptionMinSharpSatMethod &options,
+              ProblemManager *initProblem, std::ostream &out)
       : m_problem(initProblem), m_out(nullptr) {
     // init the output stream
     m_out.copyfmt(out);
@@ -107,22 +112,26 @@ public:
     m_out.basic_ios<char>::rdbuf(out.rdbuf());
 
     // we create the SAT solver.
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(options.optionSolver, m_out);
     assert(m_solver);
-    m_panicMode = lastBreath.panic;
     m_solver->initSolver(*m_problem);
-    m_solver->setCountConflict(lastBreath.countConflict, 1,
-                               m_problem->getNbVar());
     m_solver->setNeedModel(true);
 
     // we initialize the object that will give info about the problem.
-    m_specs = SpecManager::makeSpecManager(vm, *m_problem, m_out);
+    m_specs = SpecManager::makeSpecManager(options.optionSpecManager,
+                                           *m_problem, m_out);
     assert(m_specs);
 
     // we initialize the object used to compute score and partition.
-    m_hVar = ScoringMethod::makeScoringMethod(vm, *m_specs, *m_solver, m_out);
-    m_hPhase =
-        PhaseHeuristic::makePhaseHeuristic(vm, *m_specs, *m_solver, m_out);
+    m_hVarMin = ScoringMethod::makeScoringMethod(
+        options.optionBranchingHeuristicMin, *m_specs, *m_solver, m_out);
+    m_hPhaseMin = PhaseHeuristic::makePhaseHeuristic(
+        options.optionBranchingHeuristicMin, *m_specs, *m_solver, m_out);
+
+    m_hVarInd = ScoringMethod::makeScoringMethod(
+        options.optionBranchingHeuristicMin, *m_specs, *m_solver, m_out);
+    m_hPhaseInd = PhaseHeuristic::makePhaseHeuristic(
+        options.optionBranchingHeuristicMin, *m_specs, *m_solver, m_out);
 
     // specify which variables are decisions, and which are not.
     m_redirectionPos.clear();
@@ -145,16 +154,16 @@ public:
     }
 
     // no partitioning heuristic for the moment.
-    assert(m_hVar && m_hPhase);
-    m_cacheInd = CacheManager<T>::makeCacheManager(vm, m_problem->getNbVar(),
-                                                   m_specs, m_out);
+    m_cacheInd = CacheManager<T>::makeCacheManager(
+        options.optionCacheManagerInd, m_problem->getNbVar(), m_specs, m_out);
     m_cacheMax = CacheManager<MinSharpSatResult>::makeCacheManager(
-        vm, m_problem->getNbVar(), m_specs, m_out);
+        options.optionCacheManagerMin, m_problem->getNbVar(), m_specs, m_out);
 
     // init the clock time.
     initTimer();
 
-    m_optCached = vm["cache-activated"].as<bool>();
+    m_optCachedMin = options.optionCacheManagerMin.isActivated;
+    m_optCachedInd = options.optionCacheManagerInd.isActivated;
     m_nbDecisionNode = m_nbSplit = m_nbCallCall = 0;
 
     m_stampIdx = 0;
@@ -165,7 +174,7 @@ public:
     m_memoryPages.push_back(new u_int8_t[c_sizePage]);
     m_posInMemoryPages = 0;
     m_sizeArray = m_problem->getMaxVar().size();
-  } // constructor
+  }  // constructor
 
   /**
      Destructor.
@@ -174,16 +183,17 @@ public:
     delete m_problem;
     delete m_solver;
     delete m_specs;
-    delete m_hVar;
-    delete m_hPhase;
+    delete m_hVarMin;
+    delete m_hPhaseMin;
+    delete m_hVarInd;
+    delete m_hPhaseInd;
     delete m_cacheInd;
     delete m_cacheMax;
 
-    for (auto page : m_memoryPages)
-      delete[] page;
-  } // destructor
+    for (auto page : m_memoryPages) delete[] page;
+  }  // destructor
 
-private:
+ private:
   /**
      Print out information about the solving process.
 
@@ -201,7 +211,7 @@ private:
         << std::setw(WIDTH_PRINT_COLUMN_MC) << MemoryStat::memUsedPeak() << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbDecisionNode << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << m_minCount << "|\n";
-  } // showInter
+  }  // showInter
 
   /**
      Print out a line of dashes.
@@ -210,10 +220,9 @@ private:
    */
   inline void separator(std::ostream &out) {
     out << "c ";
-    for (int i = 0; i < NB_SEP; i++)
-      out << "-";
+    for (int i = 0; i < NB_SEP; i++) out << "-";
     out << "\n";
-  } // separator
+  }  // separator
 
   /**
      Print out the header information.
@@ -234,7 +243,7 @@ private:
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "max#count"
         << "|\n";
     separator(out);
-  } // showHeader
+  }  // showHeader
 
   /**
      Print out information when it is requiered.
@@ -242,11 +251,9 @@ private:
      @param[in] out, the stream we use to print out information.
    */
   inline void showRun(std::ostream &out) {
-    if (!(m_nbCallCall & (MASK_HEADER)))
-      showHeader(out);
-    if (m_nbCallCall && !(m_nbCallCall & MASK_SHOWRUN_MC))
-      showInter(out);
-  } // showRun
+    if (!(m_nbCallCall & (MASK_HEADER))) showHeader(out);
+    if (m_nbCallCall && !(m_nbCallCall & MASK_SHOWRUN_MC)) showInter(out);
+  }  // showRun
 
   /**
      Print out the final stat.
@@ -267,7 +274,7 @@ private:
     m_cacheMax->printCacheInformation(out);
     out << "c Final time: " << getTimer() << "\n";
     out << "c\n";
-  } // printFinalStat
+  }  // printFinalStat
 
   /**
    * @brief Get a pointer on an allocated array of size m_sizeArray (which is
@@ -284,7 +291,7 @@ private:
       ret = m_memoryPages.back();
     }
     return ret;
-  } // getArray
+  }  // getArray
 
   /**
    * Expel from a set of variables the ones they are marked as being decidable.
@@ -296,10 +303,9 @@ private:
                           std::vector<bool> &isDecisionVariable) {
     unsigned j = 0;
     for (unsigned i = 0; i < vars.size(); i++)
-      if (isDecisionVariable[vars[i]])
-        vars[j++] = vars[i];
+      if (isDecisionVariable[vars[i]]) vars[j++] = vars[i];
     vars.resize(j);
-  } // expelNoDecisionVar
+  }  // expelNoDecisionVar
 
   /**
    * Expel from a set of variables the ones they are marked as being decidable.
@@ -311,10 +317,9 @@ private:
                           std::vector<bool> &isDecisionVariable) {
     unsigned j = 0;
     for (unsigned i = 0; i < lits.size(); i++)
-      if (isDecisionVariable[lits[i].var()])
-        lits[j++] = lits[i];
+      if (isDecisionVariable[lits[i].var()]) lits[j++] = lits[i];
     lits.resize(j);
-  } // expelNoDecisionLit
+  }  // expelNoDecisionLit
 
   /**
    * @brief Search for a valuation of the max variables that maximizes the
@@ -340,7 +345,7 @@ private:
       return;
     }
 
-    m_solver->whichAreUnits(setOfVar, unitsLit); // collect unit literals
+    m_solver->whichAreUnits(setOfVar, unitsLit);  // collect unit literals
     m_specs->preUpdate(unitsLit);
 
     // compute the connected composant
@@ -353,8 +358,7 @@ private:
     // init the returned result.
     result.count = T(1);
     result.valuation = getArray();
-    for (unsigned i = 0; i < m_sizeArray; i++)
-      result.valuation[i] = 0;
+    for (unsigned i = 0; i < m_sizeArray; i++) result.valuation[i] = 0;
 
     Lit propagateMaxVar = lit_Undef;
     for (auto l : unitsLit)
@@ -398,10 +402,9 @@ private:
             }
           }
 
-          if (result.count == 0)
-            break;
+          if (result.count == 0) break;
         }
-      } // else we have a tautology
+      }  // else we have a tautology
     }
 
     for (unsigned i = 0; i < m_sizeArray; i++) {
@@ -417,7 +420,7 @@ private:
 
     m_specs->postUpdate(unitsLit);
     expelNoDecisionLit(unitsLit, m_isDecisionVar);
-  } // searchMaxValuation
+  }  // searchMaxValuation
 
   /**
    * This function select a variable and compile a decision node.
@@ -431,7 +434,7 @@ private:
   void searchMinSharpSatDecision(std::vector<Var> &connected, std::ostream &out,
                                  MinSharpSatResult &result) {
     // search the next variable to branch on
-    Var v = m_hVar->selectVariable(connected, *m_specs, m_isMaxDecisionVar);
+    Var v = m_hVarMin->selectVariable(connected, *m_specs, m_isMaxDecisionVar);
 
     if (v == var_Undef) {
       std::vector<Lit> unitsLit;
@@ -440,12 +443,11 @@ private:
       result.count *= m_problem->computeWeightUnitFree<T>(unitsLit, freeVar);
       result.valuation = NULL;
 
-      if (result.count > m_minCount)
-        m_minCount = result.count;
+      if (result.count > m_minCount) m_minCount = result.count;
       return;
     }
 
-    Lit l = Lit::makeLit(v, m_hPhase->selectPhase(v));
+    Lit l = Lit::makeLit(v, m_hPhaseMin->selectPhase(v));
     m_nbDecisionNode++;
 
     // consider the two value for l
@@ -488,7 +490,7 @@ private:
 
     if (m_minCount == -1 || result.count < m_minCount)
       m_minCount = result.count;
-  } // searchMaxSharpSatDecision
+  }  // searchMaxSharpSatDecision
 
   /**
    * Count the number of projected models.
@@ -506,10 +508,9 @@ private:
     showRun(out);
     m_nbCallCall++;
 
-    if (!m_solver->solve(setOfVar))
-      return T(0);
+    if (!m_solver->solve(setOfVar)) return T(0);
 
-    m_solver->whichAreUnits(setOfVar, unitsLit); // collect unit literals
+    m_solver->whichAreUnits(setOfVar, unitsLit);  // collect unit literals
     m_specs->preUpdate(unitsLit);
 
     // compute the connected composant
@@ -535,11 +536,11 @@ private:
           ret = ret * curr;
         }
       }
-    } // else we have a tautology
+    }  // else we have a tautology
 
     m_specs->postUpdate(unitsLit);
     return ret;
-  } // countInd_
+  }  // countInd_
 
   /**
    * This function select a variable and compile a decision node.
@@ -551,12 +552,11 @@ private:
    */
   T countIndDecisionNode(std::vector<Var> &connected, std::ostream &out) {
     // search the next variable to branch on
-    Var v = m_hVar->selectVariable(connected, *m_specs, m_isDecisionVar);
+    Var v = m_hVarInd->selectVariable(connected, *m_specs, m_isDecisionVar);
 
-    if (v == var_Undef)
-      return T(1);
+    if (v == var_Undef) return T(1);
 
-    Lit l = Lit::makeLit(v, m_hPhase->selectPhase(v));
+    Lit l = Lit::makeLit(v, m_hPhaseInd->selectPhase(v));
     m_nbDecisionNode++;
 
     // consider the two value for l
@@ -580,7 +580,7 @@ private:
     b[0].d *= m_problem->computeWeightUnitFree<T>(b[0].unitLits, b[0].freeVars);
     b[1].d *= m_problem->computeWeightUnitFree<T>(b[1].unitLits, b[1].freeVars);
     return b[0].d + b[1].d;
-  } // computeDecisionNode
+  }  // computeDecisionNode
 
   /**
      Compute U using the trace of a SAT solver.
@@ -602,9 +602,9 @@ private:
     DataBranch<T> b;
     searchMinValuation(setOfVar, b.unitLits, b.freeVars, out, result);
     result.count *= m_problem->computeWeightUnitFree<T>(b.unitLits, b.freeVars);
-  } // compute
+  }  // compute
 
-public:
+ public:
   /**
    * @brief Search for the instanciation of the variables of
    * m_problem->getMaxVar() that maximize the number of the remaining variables
@@ -613,10 +613,9 @@ public:
    *
    * @param[in] vm, the set of options.
    */
-  void run(po::variables_map &vm) {
+  void run() {
     std::vector<Var> setOfVar;
-    for (int i = 1; i <= m_specs->getNbVariable(); i++)
-      setOfVar.push_back(i);
+    for (int i = 1; i <= m_specs->getNbVariable(); i++) setOfVar.push_back(i);
 
     MinSharpSatResult result;
     compute(setOfVar, m_out, result);
@@ -628,6 +627,6 @@ public:
     std::cout << "0\n";
 
     std::cout << "s " << result.count << "\n";
-  } // run
+  }  // run
 };
-} // namespace d4
+}  // namespace d4

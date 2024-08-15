@@ -15,7 +15,7 @@ $SOLVER /tmp/bench.cnf > /dev/null
 if [ $? -ne 10 ]; then exit 0; fi
 
 MODEL_COUNTER="../build/d4_debug -m counting -i"
-TESTED_METHOD="../build/d4_debug -m max#sat  --maxsharpsat-option-cut-max 1 --maxsharpsat-option-cut-ind 1 --maxsharpsat-option-greedy-init 1 -i"
+TESTED_METHOD="../build/d4_debug -m ere -i"
 COMPARED_METHOD="../build/d4_debug -m max#sat  --maxsharpsat-option-cut-max 0 --maxsharpsat-option-cut-ind 0 --maxsharpsat-option-greedy-init 0 -i"
 
 

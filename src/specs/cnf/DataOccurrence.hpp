@@ -3,22 +3,25 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #pragma once
 
 #include <cassert>
+
+#include "SpecClauseInfo.hpp"
 
 namespace d4 {
 struct IteratorIdxClause {
@@ -28,14 +31,41 @@ struct IteratorIdxClause {
 
 struct DataOccurrence {
   int *bin;
-  unsigned nbBin;
   int *notBin;
   unsigned nbNotBin;
+  unsigned nbBin;
 
-  void removeBin(int idx) {
+  inline void cleanNotBin() { nbNotBin = 0; }
+
+  inline void cleanBin() {
+    bin += nbBin;
+    nbBin = 0;
+  }
+
+  inline void clean() {
+    cleanNotBin();
+    cleanBin();
+    assert(bin == notBin);
+  }
+
+  inline void removeMarkedBin(const std::vector<SpecClauseInfo> &infoClauses) {
+    if (!nbBin) return;
+    int *end = &bin[nbBin - 1], *endSize = &bin[nbBin];
+    while (end >= bin) {
+      if (!infoClauses[*end].isSat)
+        end--;
+      else {
+        std::swap(*end, *bin);
+        bin++;
+      }
+    }
+    nbBin = endSize - bin;
+  }
+
+  inline void removeBin(int idx) {
     for (unsigned i = 0; i < nbBin; i++) {
       if (bin[i] == idx) {
-        bin[i] = *bin;
+        std::swap(bin[i], *bin);
         bin++;
         nbBin--;
         return;
@@ -43,15 +73,30 @@ struct DataOccurrence {
     }
     assert(0);  // we have to remove one element.
   }
-  void removeNotBin(int idx) {
+
+  inline unsigned size() { return nbNotBin + nbBin; }
+
+  inline void removeNotBin(int idx) {
     for (unsigned i = 0; i < nbNotBin; i++) {
       if (notBin[i] == idx) {
-        notBin[i] = notBin[--nbNotBin];
+        std::swap(notBin[i], notBin[nbNotBin - 1]);
+        --nbNotBin;
         return;
       }
     }
     assert(0);  // we have to remove one element.
   }
+
+  inline void removeNotBinMarked(
+      const std::vector<SpecClauseInfo> &infoClauses) {
+    for (unsigned i = 0; i < nbNotBin;) {
+      if (infoClauses[notBin[i]].isSat) {
+        std::swap(notBin[i], notBin[nbNotBin - 1]);
+        --nbNotBin;
+      } else
+        i++;
+    }
+  }  // removeNotBinMarked
 
   inline void addBin(int idx) {
     --bin;

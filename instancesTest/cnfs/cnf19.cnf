@@ -1,0 +1,18 @@
+c 2022-05-15 22:25:07 by qbfdd.py,v 1.2.2
+c qbfdd.py /tmp/1test.cnf /home/lagniez/Works/Softs/d4/scripts/testPreproc.sh -m ddmin -g b -qS
+c 
+c mode: ddmin
+c rounds: 2
+c test runs: 853
+c time elapsed: 41.00s
+c total: clauses  : -130 (95.59%)
+c        variables: -0 (0.00%)
+c        literals : -578 (97.80%)
+c 
+p cnf 23 6
+6 8 11 0
+3 8 0
+-5 -8 0
+-11 21 0
+5 -6 0
+-21 -3 0

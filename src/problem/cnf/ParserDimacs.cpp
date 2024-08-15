@@ -3,17 +3,18 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include "ParserDimacs.hpp"
@@ -22,42 +23,9 @@
 
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
+#include "src/utils/Parsing.hpp"
 
 namespace d4 {
-
-/**
- * @brief Read the next integar in the given stream while the value 0 is not
- * reached.
- *
- * @param in, the stream.
- * @param list, the list of integer we parsed.
- */
-void ParserDimacs::readListIntTerminatedByZero(BufferRead &in,
-                                               std::vector<int> &list) {
-  int v = -1;
-  do {
-    v = in.nextInt();
-    if (v) list.push_back(v);
-  } while (v);
-}  // readListIntTerminatedByZero
-
-/**
- * @brief Parse a literal index and a weight and store the result in the given
- * vector.
- *
- * @param in, the stream buffer where we get the information.
- * @param weightLit, the place where is stored the data.
- */
-void ParserDimacs::parseWeightedLit(BufferRead &in,
-                                    std::vector<double> &weightLit) {
-  int lit = in.nextInt();
-  double w = in.nextDouble();
-
-  if (lit > 0)
-    weightLit[lit << 1] = w;
-  else
-    weightLit[((-lit) << 1) + 1] = w;
-}  // parseWeightedLit
 
 /**
  * @brief Parse the dimacs format in order to extract CNF formula and
@@ -74,11 +42,15 @@ int ParserDimacs::parse_DIMACS_main(BufferRead &in,
   std::vector<Lit> lits;
   std::string s;
 
-  std::vector<double> &weightLit = problemManager->getWeightLit();
+  std::vector<mpz::mpf_float> &weightLit = problemManager->getWeightLit();
   std::vector<std::vector<Lit>> &clauses = problemManager->getClauses();
 
   int nbVars = 0;
   int nbClauses = 0;
+
+  int cpt = 0;
+  char previousChar = '\0';
+  bool weightedProblem = false;
 
   for (;;) {
     in.skipSpace();
@@ -108,36 +80,73 @@ int ParserDimacs::parse_DIMACS_main(BufferRead &in,
       weightLit.resize(((nbVars + 1) << 1), 1);
 
       if (nbClauses < 0) printf("parse error\n"), exit(2);
+    } else if (in.currentChar() == 'e') {
+      in.consumeChar();
+      if (previousChar != 'e') {
+        cpt++;
+        previousChar = 'e';
+      }
+      assert(cpt <= 3);
+
+      // we only consider the variable if there are max variables.
+      std::vector<Var> vars;
+      Parsing::readListIntTerminatedByZero(in, vars);
+      if (cpt == 1)
+        for (auto v : vars) problemManager->getMaxVar().push_back(v);
+    } else if (in.currentChar() == 'r') {
+      in.consumeChar();
+      if (previousChar != 'r') {
+        cpt++;
+        previousChar = 'r';
+      }
+      assert(cpt <= 2);
+
+      std::vector<Var> vars;
+      Parsing::parseRandonVars(in, weightLit, vars);
+
+      for (auto v : vars) problemManager->getIndVar().push_back(v);
+      in.skipLine();
+    } else if (in.currentChar() == 'z') {
+      std::cout << "c [PARSER] Read EOF in the file\n";
+      break;
     } else if (in.currentChar() == 'v') {
       in.consumeChar();
       assert(in.currentChar() == 'p');
       in.consumeChar();
-      readListIntTerminatedByZero(in, problemManager->getSelectedVar());
+      Parsing::readListIntTerminatedByZero(in,
+                                           problemManager->getSelectedVar());
     } else if (in.currentChar() == 'w') {
       in.consumeChar();
       in.skipSpace();
-      parseWeightedLit(in, weightLit);
+      Parsing::parseNextWeightedLits(in, weightLit);
     } else if (in.currentChar() == 'c') {
       in.consumeChar();
       in.skipSimpleSpace();
 
-      if (in.currentChar() != 'p') {
+      if (in.currentChar() == 't') {
+        in.consumeChar();
+        weightedProblem = (in.currentChar() == 'w');
+        in.skipLine();
+        std::cout << "c [PARSER] " << (weightedProblem ? "Weighted " : " ")
+                  << "Model Counting problem\n";
+      } else if (in.currentChar() != 'p') {
         if (in.canConsume("max")) {
-          readListIntTerminatedByZero(in, problemManager->getMaxVar());
+          Parsing::readListIntTerminatedByZero(in, problemManager->getMaxVar());
         } else if (in.canConsume("ind"))
-          readListIntTerminatedByZero(in, problemManager->getIndVar());
+          Parsing::readListIntTerminatedByZero(in, problemManager->getIndVar());
         else
           in.skipLine();
       } else {
         in.consumeChar();
         if (in.canConsume("weight")) {
-          parseWeightedLit(in, weightLit);
+          Parsing::parseNextWeightedLits(in, weightLit);
 
           // in this format we have an end line we have to consume.
           [[maybe_unused]] int endLine = in.nextInt();
           assert(!endLine);
         } else if (in.canConsume("show"))
-          readListIntTerminatedByZero(in, problemManager->getSelectedVar());
+          Parsing::readListIntTerminatedByZero(
+              in, problemManager->getSelectedVar());
         else
           in.skipLine();
       }
@@ -179,9 +188,16 @@ int ParserDimacs::parse_DIMACS_main(BufferRead &in,
   return nbVars;
 }
 
-int ParserDimacs::parse_DIMACS(std::string input_stream,
+int ParserDimacs::parse_DIMACS(const std::string &input_stream,
                                ProblemManagerCnf *problemManager) {
   BufferRead in(input_stream);
   return parse_DIMACS_main(in, problemManager);
 }  // parse_DIMACS
+
+int ParserDimacs::parse_DIMACS(const int fd, ProblemManagerCnf *problemManager,
+                               bool keepOpen) {
+  BufferRead in(fd, keepOpen);
+  return parse_DIMACS_main(in, problemManager);
+}  // parse_DIMACS
+
 }  // namespace d4

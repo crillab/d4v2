@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ROOT_PATH=".."
+ROOT_PATH="."
 CNF_GENERATOR="$ROOT_PATH/cnfuzz"
 SOLVER="$ROOT_PATH/minisat"
 
@@ -17,7 +17,7 @@ generateSatisfiableCNF()
     ret=20
     while [ $ret -ne 10 ]
     do
-        $CNF_GENERATOR > /tmp/test.cnf
+        $CNF_GENERATOR | grep -v "^c " > /tmp/test.cnf
         $SOLVER /tmp/test.cnf > /dev/null
         ret=$?
     done
@@ -30,7 +30,7 @@ generateSatisfiableCNFLimited()
     ret=20
     while [ $ret -ne 10 ]
     do
-        $CNF_GENERATOR > /tmp/test.cnf
+        $CNF_GENERATOR | grep -v "^c " > /tmp/test.cnf
 
 	nbVar=$(grep "p cnf" /tmp/test.cnf | cut -d " " -f3)
 	if [ $nbVar -gt $1 ]; then continue; fi
@@ -93,14 +93,9 @@ debugRoutine(){
     while [ true ]
     do
         printf "number of instances tested %d\r" "$cpt"
-
-	nameFileCNF=$(generateSatisfiableCNFLimited 5000)
-	# echo "$1" $nameFileCNF
-	# grep "p cnf " $nameFileCNF
-        timeout 10 $1 $nameFileCNF > /dev/null 2>/dev/null
-
+	    nameFileCNF=$(generateSatisfiableCNFLimited 200)
+        timeout 2 $1 $nameFileCNF > /dev/null 2>/dev/null
         code=$?
-	# echo $code
 
         if [ $code -ne 124 ]
         then

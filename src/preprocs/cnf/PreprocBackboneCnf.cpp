@@ -3,24 +3,27 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #include "PreprocBackboneCnf.hpp"
 
 #include <bits/types/clock_t.h>
 
+#include <csignal>
 #include <ctime>
 
+#include "3rdParty/bipe/src/bipartition/methods/Method.hpp"
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
 
 namespace d4 {
@@ -30,79 +33,73 @@ namespace d4 {
 
    @param[in] vm, the options used (solver).
  */
-PreprocBackboneCnf::PreprocBackboneCnf(po::variables_map &vm,
-                                       std::ostream &out) {
-  ws = WrapperSolver::makeWrapperSolverPreproc(vm, out);
-}  // constructor
+PreprocBackboneCnf::PreprocBackboneCnf(std::ostream &out) {}  // constructor
 
 /**
    Destructor.
  */
-PreprocBackboneCnf::~PreprocBackboneCnf() { delete ws; }  // destructor
+PreprocBackboneCnf::~PreprocBackboneCnf() {}  // destructor
 
 /**
- * @brief The preprocessing itself.
- * @param[out] p, the problem we want to preprocess.
- * @param[out] lastBreath gives information about the way the    preproc sees
- * the problem.
+ * @brief PreprocBackboneCnf::run implementation.
  */
-ProblemManager *PreprocBackboneCnf::run(ProblemManager *pin,
-                                        LastBreathPreproc &lastBreath) {
-  // init the solver.
-  ws->initSolver(*pin);
-  ws->setNeedModel(true);
-  unsigned nbSatCalls = 1;
-  unsigned nbFoundUnit = 0;
+ProblemManager *PreprocBackboneCnf::run(ProblemManager *pin, unsigned timeout) {
+  // create the problem regarding the bipe library.
+  std::vector<Var> protect, selected;
+  if (pin->getSelectedVar().size())
+    selected = pin->getSelectedVar();
+  else
+    for (unsigned i = 1; i <= pin->getNbVar(); i++)
+      if (pin->getWeightLit(Lit::makeLitTrue(i)) ==
+          pin->getWeightLit(Lit::makeLitFalse(i)))
+        selected.push_back(i);
 
-  if (!ws->solve()) return pin->getUnsatProblem();
-  lastBreath.panic = ws->getNbConflict() > 100000;
-  ws->setReversePolarity(true);
+  std::vector<double> tmp(pin->getNbVar() + 1, 1.0);
+  bipe::Problem pb(pin->getNbVar(), tmp, selected, protect);
 
-  if (!lastBreath.panic) {
-    // compute the backbone.
-    std::vector<bool> marked(pin->getNbVar() + 1, false);
-    std::vector<lbool> &model = ws->getModel();
+  ProblemManagerCnf &pcnf = dynamic_cast<ProblemManagerCnf &>(*pin);
+  std::vector<std::vector<bipe::Lit>> &clauses = pb.getClauses();
 
-    for (unsigned i = 1; i <= pin->getNbVar(); i++) {
-      if (marked[i] || ws->varIsAssigned(i)) continue;
-
-      nbSatCalls++;
-
-      // test the negation of the literal in order to verify if it is impllied
-      Lit l = Lit::makeLit(i, (model[i] + 1) & 1);
-      ws->pushAssumption(l);
-      bool isSat = ws->solve();
-      ws->popAssumption();
-
-      if (isSat) {
-        // update the model.
-        for (unsigned j = i + 1; j < model.size(); j++)
-          marked[j] = marked[j] || (model[j] != ws->getModelVar((Var)j));
-      } else {
-        nbFoundUnit++;
-        if (!ws->varIsAssigned(i)) ws->uncheckedEnqueue(~l);
-      }
-    }
+  for (auto &cl : pcnf.getClauses()) {
+    clauses.push_back({});
+    for (auto l : cl)
+      clauses.back().push_back(bipe::Lit::makeLit(l.var(), l.sign()));
   }
 
-  // get the activity given by the solver.
-  lastBreath.countConflict.resize(pin->getNbVar() + 1, 0);
-  for (unsigned i = 1; i <= pin->getNbVar(); i++)
-    lastBreath.countConflict[i] = ws->getActivity(i);
+  // call the preprocessor to compute the backbone.
+  bipe::bipartition::Method bb;
+  std::vector<bipe::Gate> gates;
+  std::vector<std::vector<bool>> setOfModels;
+
+  std::cerr << "c [PREPOC BACKBONE] Is running for at most " << timeout
+            << " seconds\n";
+
+  PreprocManager::s_isRunning = &bb;
+
+  // change the handler.
+  void (*handler)(int) = [](int s) {
+    if (PreprocManager::s_isRunning)
+      ((bipe::bipartition::Method *)PreprocManager::s_isRunning)->interrupt();
+  };
+  signal(SIGALRM, handler);
+  alarm(timeout);
+
+  bool res = bb.simplifyBackbone(
+      pb, (bipe::bipartition::OptionBackbone){true, timeout, true, "glucose"},
+      gates, std::cout, setOfModels);
+  s_isRunning = nullptr;
+
+  if (!res) {
+    std::cout
+        << "c [PREPROC BACKBONE] The process has been stopped before the end\n";
+  }
 
   // the list of unit literals.
   std::vector<Lit> units;
-  ws->getUnits(units);
+  for (auto g : gates)
+    units.push_back(Lit::makeLit(g.output.var(), g.output.sign()));
 
-  // some statistics.
-  std::cout << "c [PREPOC BACKBONE] Number of SAT calls: " << nbSatCalls
-            << "\n";
   std::cout << "c [PREPOC BACKBONE] Backone size: " << units.size() << "\n";
-  std::cout << "c [PREPOC BACKBONE] Number of units detected: " << nbFoundUnit
-            << "\n";
-  std::cout << "c [PREPOC BACKBONE] Panic in the preprocessing: "
-            << lastBreath.panic << "\n";
-
   return pin->getConditionedFormula(units);
 }  // run
 }  // namespace d4

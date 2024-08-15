@@ -3,49 +3,72 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
+#include <fcntl.h>
+
+#include <boost/multiprecision/gmp.hpp>
 #include <iostream>
 #include <string>
 
 #define BUFFER_SIZE 65536
 
 namespace d4 {
+
 class BufferRead {
   int pos;
   int size;
   char buffer[BUFFER_SIZE];
-  FILE *f;
+  int m_fd;
+  int m_keepOpen;
 
  public:
-  BufferRead(std::string &name) {
+  BufferRead(const std::string &name, bool keepOpen = false) {
     pos = 0;
     size = 0;
+    m_keepOpen = keepOpen;
 
-    f = fopen(name.c_str(), "r");
-    if (!f)
+    m_fd = open(name.c_str(), O_RDONLY);
+    if (!m_fd)
       std::cerr << "ERROR! Could not open file: " << name << "\n", exit(1);
 
     // fill the buffer
-    size = fread(buffer, sizeof(char), BUFFER_SIZE, f);
-    if (!size && ferror(f))
-      std::cerr << "Cannot read the file: " << name << "\n", exit(1);
+    size = read(m_fd, buffer, BUFFER_SIZE);
+    if (size < 0) {
+      perror("read()");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  BufferRead(const int fd, bool keepOpen = false) {
+    pos = 0;
+    size = 0;
+    m_fd = fd;
+    m_keepOpen = keepOpen;
+
+    // fill the buffer
+    size = read(m_fd, buffer, BUFFER_SIZE);
+    if (size < 0) {
+      perror("read()");
+      exit(EXIT_FAILURE);
+    }
   }
 
   ~BufferRead() {
-    if (f) fclose(f);
+    if (m_fd && !m_keepOpen) close(m_fd);
   }
 
   inline char currentChar() { return buffer[pos]; }
@@ -59,13 +82,15 @@ class BufferRead {
     pos++;
     if (pos >= size) {
       pos = 0;
-      size = fread(buffer, sizeof(char), BUFFER_SIZE, f);
-      if (!size && ferror(f))
-        std::cerr << "Cannot read the reamaining\n", exit(1);
+      size = read(m_fd, buffer, BUFFER_SIZE);
+      if (size < 0) {
+        perror("read()");
+        exit(EXIT_FAILURE);
+      }
     }
   }
 
-  inline bool eof() { return !size && feof(f); }
+  inline bool eof() { return !size; }
   inline void skipSpace() {
     while (!eof() && (currentChar() == ' ' || currentChar() == '\t' ||
                       currentChar() == '\n' || currentChar() == '\r'))
@@ -129,6 +154,29 @@ class BufferRead {
     double ret = 0;
     ret = std::stod(cur, &pos);
 
+    return (sign) ? -ret : ret;
+  }
+
+  /**
+   * @brief Read on the buffer the next float.
+   *
+   * @return an mpz::mpf_float that encode the float we read.
+   */
+  inline boost::multiprecision::mpf_float nextMpf_float() {
+    skipSpace();
+    bool sign = currentChar() == '-';
+    if (sign) consumeChar();
+
+    std::string cur = "";
+    while (!eof() && ((currentChar() >= '0' && currentChar() <= '9') ||
+                      currentChar() == '.' || currentChar() == 'e' ||
+                      currentChar() == '-')) {
+      cur += currentChar();
+      nextChar();
+    }
+
+    boost::multiprecision::mpf_float ret =
+        boost::multiprecision::mpf_float(cur);
     return (sign) ? -ret : ret;
   }
 };

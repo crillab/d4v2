@@ -1,0 +1,165 @@
+
+  Shatter 0.3 
+  Idenifying Symmetries in CNF Instances
+
+  by Fadi Aloul, Igor Markov, and Karem Sakallah
+     <faloul, imarkov, karem@eecs.umich.edu>
+  (C) 2003 University of Michigan    
+
+  This version was compiled on Linux 2.4.20, running g++ 3.2
+
+
+  Description  
+  -----------
+  Shatter performs the following:
+  - Reads a CNF formula as an input.
+  - Detects the symmetries in the CNF formula using saucy.
+  - Augments the CNF instance with symmetry-breaking clauses and outputs it.
+
+  General notes:
+  - Used as a pre-processor.
+  - Unsatisfiable instances will remain unsatisfiable.
+  - Satisfiable instances will have fewer satisfying assignments, 
+    but given the symmetry-breaking clauses, it should be easy to extract
+    the complete set of satisfying assignments of the original instance.
+
+
+  File Details
+  ------------ 
+   cnf2gap              : Reads file.cnf, creates a bi-partite graph,
+                          and prints it in GAP's input format.
+			  (saucy reads GAP's input format).
+                          A Variable is represented by 2 vertices.
+			  A Clause (except binary clauses) is
+			  represented by a vertex as well.
+			   
+   saucy                : Graph Automorphism Tool by Paul Darga
+			  at the University of Michigan.
+			  (pdarga@umich.edu)
+	  		  http://www.eecs.umich.edu/~pdarga/pub/auto/saucy.html
+			  Returns the identified symmetries
+			  Prints to "saucy.result" file:
+                          #symmetries, #generators, saucy runtime.
+
+   gap2cnf              : Generates symmetry-breaking clauses based on the
+			  identified symmetries.
+			  [Read Note Below]
+
+ * Shatter.pl           : Executes the above 3 routines and parses through
+			  the necessary input/output files.  
+
+  
+  Notes
+  -----
+  - Several formulations exist for converting permutations into 
+    symmetry-breaking clauses. This release includes the most 
+    efficient (presented at IJCAI 2003). 
+  - Considers only generators. 
+  - Considers all variables in the permutation. 
+  - If you need the other formulations, please contact the author.
+
+
+  Installation
+  ------------
+  1) Define the cnf2gap, saucy, and gap2cnf locations in Shatter.pl
+ 
+  2) Run Shatter.pl
+
+
+  Sample Run 
+  ----------
+   % Shatter.pl sample.cnf
+
+   (replace "sample.cnf" by original CNF file name)
+
+
+  Example
+  -------
+  - Given the CNF formula: 
+     p cnf 3 1
+     1 2 3  0
+
+  - 6+1 vertices are created for the instance. 
+     v1 = positive literal 1  - color A
+     v2 = positive literal 2  - color A
+     v3 = positive literal 3  - color A
+     v4 = negative literal 1  - color A
+     v5 = negative literal 2  - color A
+     v6 = negative literal 3  - color A
+     v7 = clause (1 + 2 + 3)  - color B
+
+  - Vectices representing variables and clauses are colored differently
+
+  - 6 edges are created
+     e1 = v1 - v4
+     e2 = v2 - v5
+     e3 = v3 - v6
+     e4 = v7 - v1 
+     e5 = v7 - v2 
+     e6 = v7 - v3 
+
+  - Two permutations are identified, each consisting of two cycles:
+     #1 (v2,v3)(v5,v6)
+     #2 (v1,v2)(v4,v5)  
+  
+  - If only the first cycle is selected from each permutation,
+    the new CNF formula:
+     p cnf 3 3
+     1 2 3  0  
+     -2 3   0
+     -1 2   0
+
+
+  Documentation:
+  --------------
+  Additional information can be found in the following papers:
+
+  F. Aloul, I. Markov, and K. Sakallah, "Efficient Symmetry-Breaking for 
+  Boolean Satisfiability," International Joint Conference on Artificial 
+  Intelligence (IJCAI), 2003.
+
+
+  F. Aloul, I. Markov, and K. Sakallah, "Shatter: Efficient Symmetry-
+  Breaking for Boolean Satisfiability," Design Automation Conference 
+  (DAC), 2003.
+
+
+  F. Aloul, A. Ramani, I. Markov, and K. Sakallah, "Solving Difficult SAT 
+  Instances in the Presence of Symmetry," Transactions on Computer Aided 
+  Design, 2003.
+
+  F. Aloul, A. Ramani, I. Markov, and K. Sakallah, "Solving Difficult SAT
+  Instances in the Presence of Symmetry," Design Automation Conference
+  (DAC), New Orleans,  Louisiana, 2002.
+
+
+  Versions:
+  ---------
+  * Version 0.3
+    - New version uses saucy instead of GAP as graph automorphism tool. 
+      Much faster and simpler to use.
+
+  * Version 0.2
+    - New symmetry-breaking constructions added
+
+  * Version 0.1
+    - First release of Shatter.
+
+
+  Download:       
+  ---------
+  - Get the latest version of Shatter from:
+    http://www.eecs.umich.edu/~faloul
+
+
+  Feedback:    
+  ---------    
+  - Please email me if you have any comments or ideas on how to improve it
+  - Send bug reports to faloul@eecs.umich.edu                  
+
+
+  Copyrights:
+  -----------
+  - Please read attached copyrights form.
+
+

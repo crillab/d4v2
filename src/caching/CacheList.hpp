@@ -3,32 +3,31 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <vector>
 
-#include "BucketManager.hpp"
-#include "CacheCleaningManager.hpp"
+#include "CacheManager.hpp"
 #include "CachedBucket.hpp"
-#include "src/caching/cnf/BucketManagerCnf.hpp"
-#include "src/hashing/HashString.hpp"
+#include "cleaning/CacheCleaningManager.hpp"
+#include "src/options/cache/OptionCacheManager.hpp"
 #include "src/specs/SpecManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
+
 template <class T>
 class CacheList : public CacheManager<T> {
  private:
@@ -39,14 +38,14 @@ class CacheList : public CacheManager<T> {
   /**
    * @brief Construct a new Cache List object
    *
-   * @param vm is a map to get the option.
+   * @param options are the selected options.
    * @param nbVar is the number of variables.
    * @param specs is a structure to get data about the formula.
    * @param out is the stream where are printed out the logs.
    */
-  CacheList(po::variables_map &vm, unsigned nbVar, SpecManager *specs,
-            std::ostream &out)
-      : CacheManager<T>(vm, nbVar, specs, out) {
+  CacheList(const OptionCacheManager &options, unsigned nbVar,
+            SpecManager *specs, std::ostream &out)
+      : CacheManager<T>(options, nbVar, specs, out) {
     out << "c [CACHE LIST CONSTRUCTOR]\n";
     initHashTable(nbVar);
   }  // constructor

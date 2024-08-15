@@ -3,39 +3,44 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
-#include <boost/program_options.hpp>
-
 #include "ActivityManager.hpp"
 #include "PolarityManager.hpp"
+#include "src/options/solvers/OptionSolver.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 class WrapperSolver : public ActivityManager, public PolarityManager {
  private:
  protected:
   std::vector<char> m_isInAssumption;
 
  public:
-  static WrapperSolver *makeWrapperSolver(po::variables_map &vm,
+  /**
+   * @brief Wrapper to get a solver able to solve the input problem for the
+   * compilation/counting problems.
+   *
+   * @param name is the solver name.
+   * @param out is the stream where is printed out the logs.
+   * @return a solver.
+   */
+  static WrapperSolver *makeWrapperSolver(const OptionSolver &name,
                                           std::ostream &out);
-  static WrapperSolver *makeWrapperSolverPreproc(po::variables_map &vm,
-                                                 std::ostream &out);
 
   virtual ~WrapperSolver() {}
   virtual void initSolver(ProblemManager &p) = 0;
@@ -57,6 +62,7 @@ class WrapperSolver : public ActivityManager, public PolarityManager {
   virtual unsigned getNbConflict() = 0;
   virtual void setReversePolarity(bool value) = 0;
   virtual bool propagateAssumption() = 0;
+  virtual bool isUnsat() = 0;
 
   // this function returns false if the propagation gives a conflict.
   virtual bool decideAndComputeUnit(Lit l, std::vector<Lit> &units) = 0;
@@ -68,6 +74,9 @@ class WrapperSolver : public ActivityManager, public PolarityManager {
 
   bool warmStart(int iteration, int sizeQuery, std::vector<Var> &setOfVar,
                  std::ostream &out);
+
+  virtual void getCore() = 0;
+  virtual void getLastIUP(Lit l) = 0;
 
   /**
      Check out if a variable is already in the assumption.

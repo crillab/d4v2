@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 set -e
 set -u
 set -o pipefail
@@ -15,49 +17,25 @@ do
         s)
             opt=2
             ;;
-        l)
+        p)
             opt=3
             ;;
-
     esac
 done
 
-curRep=$PWD
-if [ $opt -eq 1 ]
-then
-   if ! [ -f 3rdParty/glucose-3.0/core/lib_debug.a ]
-   then
-       cd 3rdParty/glucose-3.0/core/
-       make libd       
-   fi
-elif [ $opt -eq 2 ]
-then
-    if ! [ -f 3rdParty/glucose-3.0/core/lib_static.a ]
-    then
-        cd 3rdParty/glucose-3.0/core/
-        make libst       
-    fi
-else
-    if ! [ -f 3rdParty/glucose-3.0/core/lib_standard.a ]
-    then
-        cd 3rdParty/glucose-3.0/core/
-        make libs
-    fi
-fi
+cd $SCRIPT_DIR/3rdParty/glucose-3.0/core/
+make libst       
+mv lib_static.a lib_glucose.a
 
+cd $SCRIPT_DIR/3rdParty/bipe/
+./build.sh -s    
 
-if ! [ -f 3rdParty/kahypar/build/lib/libkahypar.a ]
-then
-    cd $curRep
-    cd 3rdParty/kahypar/
-    mkdir -p build
-    cd build
-    cmake .. -DCMAKE_BUILD_TYPE=RELEASE
-    make -j
-fi
-
-cd $curRep
+cd $SCRIPT_DIR
 mkdir -p build
 cd build
 cmake -GNinja .. -DBUILD_MODE=$opt 
 ninja 
+
+# make a library of everything
+mv libd4.a libd4tmp.a
+ar cqT libd4.a libd4tmp.a ../3rdParty/patoh/libpatoh.a ../3rdParty/glucose-3.0/core/lib_glucose.a ../3rdParty/bipe/build/libbipe.a && echo -e 'create libd4.a\naddlib libd4.a\nsave\nend' | ar -M

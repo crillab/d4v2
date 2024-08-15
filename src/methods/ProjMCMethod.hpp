@@ -3,34 +3,35 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
 #include <unordered_map>
 
+#include "DpllStyleMethod.hpp"
 #include "MethodManager.hpp"
+#include "src/configurations/Configuration.hpp"
 #include "src/methods/Counter.hpp"
-#include "src/preprocs/PreprocManager.hpp"
+#include "src/options/methods/OptionProjMcMethod.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/cnf/ProblemManagerCnf.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 
 template <class T>
 class ProjMCMethod : public MethodManager {
@@ -70,7 +71,6 @@ class ProjMCMethod : public MethodManager {
   WrapperSolver *m_solver;
   Counter<T> *m_counter;
   CacheManager<T> *m_cache;
-  LastBreathPreproc m_lastBreath;
 
   long unsigned m_nbCallRec;
   long unsigned m_nbSplit;
@@ -83,11 +83,10 @@ class ProjMCMethod : public MethodManager {
 
      @param[in] vm, the list of options.
    */
-  ProjMCMethod(po::variables_map &vm, bool isFloat, ProblemManager *initProblem,
-               LastBreathPreproc &lastBreath)
-      : m_problem(initProblem), m_out(nullptr), m_outCounter(nullptr) {
+  ProjMCMethod(const OptionProjMcMethod &options, ProblemManager *problem,
+               std::ostream &out)
+      : m_problem(problem), m_out(nullptr), m_outCounter(nullptr) {
     m_nbCallRec = m_nbSplit = 0;
-    m_lastBreath = lastBreath;
 
     // init the output stream
     m_out.copyfmt(std::cout);
@@ -99,9 +98,8 @@ class ProjMCMethod : public MethodManager {
     m_isSelector.resize(m_problem->getNbVar() + 1, false);
     for (auto v : m_problem->getSelectedVar()) m_isProjectedVar[v] = true;
 
-    m_refinement = vm["projMC-refinement"].as<bool>();
-    m_out << "c [CONSTRUCTOR] ProjMCMethod: refinement(" << m_refinement
-          << ")\n";
+    m_refinement = options.refinement;
+    m_out << "c [PROJ MC]" << options << "\n";
 
     std::vector<std::vector<Lit>> projClause, nprojClause, mix;
     partitionFormula(m_problem, m_isProjectedVar, projClause, nprojClause, mix);
@@ -114,19 +112,22 @@ class ProjMCMethod : public MethodManager {
     // prepare the SAT solver.
     std::vector<std::vector<Lit>> satSolverClauses = projClause;
     for (auto &cl : nprojClause) satSolverClauses.push_back(cl);
-    initSatSolver(vm, m_problem, satSolverClauses, idxVar - 1);
+    initSatSolver(options.optionSolver, m_problem, satSolverClauses,
+                  idxVar - 1);
+
+    // prepare the spec manager.
+    m_specs =
+        SpecManager::makeSpecManager(options.optionSpecs, *problem, m_out);
 
     // prepare the cache.
-    m_cache = CacheManager<T>::makeCacheManager(vm, idxVar - 1, m_specs, m_out);
+    m_cache = CacheManager<T>::makeCacheManager(options.optionCache, idxVar - 1,
+                                                m_specs, m_out);
 
     // init the clock time.
     initTimer();
 
-    // update the last breath structure with the additional variables.
-    m_lastBreath.fitSizeCountConflict(idxVar);
-
     // prepare the counter.
-    initCounter(vm, m_problem, isFloat, projClause, idxVar - 1);
+    initCounter(options.optionCounter, m_problem, projClause, idxVar - 1);
     m_marked.resize(idxVar + 1, -1);
     m_flag.resize((idxVar + 1) << 1, false);
   }  // constructor
@@ -153,9 +154,9 @@ class ProjMCMethod : public MethodManager {
      @param[in] clauses, the set of clauses.
      @param[in] nbVar, the number of variables of the formula.
    */
-  void initCounter(po::variables_map &vm, ProblemManager *problem, bool isFloat,
+  void initCounter(const OptionDpllStyleMethod &options,
+                   ProblemManager *problem,
                    std::vector<std::vector<Lit>> &clauses, unsigned nbVar) {
-    int precision = vm["float-precision"].as<int>();
 #if DEBUG
     m_outCounter.copyfmt(m_out);
     m_outCounter.clear(m_out.rdstate());
@@ -164,14 +165,14 @@ class ProjMCMethod : public MethodManager {
     m_outCounter.setstate(std::ios_base::badbit);
 #endif
     // init the problem we will pass to the counter.
-    std::vector<double> weightLit((nbVar + 1) << 1, 1);
-    std::vector<double> weightVar(nbVar + 1, 2);
+    std::vector<mpz::mpf_float> weightLit((nbVar + 1) << 1, 1);
+    std::vector<mpz::mpf_float> weightVar(nbVar + 1, 2);
 
-    std::vector<double> &problemWeightLit = problem->getWeightLit();
+    std::vector<mpz::mpf_float> &problemWeightLit = problem->getWeightLit();
     for (unsigned i = 0; i < problemWeightLit.size(); i++)
       weightLit[i] = problemWeightLit[i];
 
-    std::vector<double> &problemWeightVar = problem->getWeightVar();
+    std::vector<mpz::mpf_float> &problemWeightVar = problem->getWeightVar();
     for (unsigned i = 0; i < problemWeightVar.size(); i++) {
       if (m_isProjectedVar[i])
         weightVar[i] = problemWeightVar[i];
@@ -183,13 +184,11 @@ class ProjMCMethod : public MethodManager {
     ProblemManagerCnf *p =
         new ProblemManagerCnf(nbVar, weightLit, weightVar, emptySelectedVar);
     p->setClauses(clauses);
+    m_problem = p;
 
     // create the counter.
-    m_out << "c [CONSTRUCTOR] Create an external counter: "
-          << "counting"
-          << "\n";
-    m_counter = Counter<T>::makeCounter(vm, p, "counting", isFloat, precision,
-                                        m_outCounter, m_lastBreath);
+    m_out << "c [PROJ MC] Create an external counter\n";
+    m_counter = new DpllStyleMethod<T, T>(options, problem, m_outCounter);
   }  // initCounter
 
   /**
@@ -202,34 +201,29 @@ class ProjMCMethod : public MethodManager {
      @param[in] clauses, the set of clauses.
      @param[in] nbVar, the number of variables of the formula.
    */
-  void initSatSolver(po::variables_map &vm, ProblemManager *problem,
+  void initSatSolver(const OptionSolver &options, ProblemManager *problem,
                      std::vector<std::vector<Lit>> &clauses, unsigned nbVar) {
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(options, m_out);
     assert(m_solver);
 
     // prepare the weight vectors and init the problem.
-    std::vector<double> weightLit((nbVar + 1) << 1, 1);
-    std::vector<double> weightVar(nbVar + 1, 2);
+    std::vector<mpz::mpf_float> weightLit((nbVar + 1) << 1, 1);
+    std::vector<mpz::mpf_float> weightVar(nbVar + 1, 2);
 
-    std::vector<double> &problemWeightLit = problem->getWeightLit();
+    std::vector<mpz::mpf_float> &problemWeightLit = problem->getWeightLit();
     for (unsigned i = 0; i < problemWeightLit.size(); i++)
       weightLit[i] = problemWeightLit[i];
 
-    std::vector<double> &problemWeightVar = problem->getWeightVar();
+    std::vector<mpz::mpf_float> &problemWeightVar = problem->getWeightVar();
     for (unsigned i = 0; i < problemWeightVar.size(); i++)
       weightVar[i] = problemWeightVar[i];
 
     ProblemManagerCnf p(nbVar, weightLit, weightVar, problem->getSelectedVar());
     p.setClauses(clauses);
     m_solver->initSolver(p);
-    m_solver->setCountConflict(m_lastBreath.countConflict, 1,
-                               m_problem->getNbVar());
 
     // ask for the witness.
     m_solver->setNeedModel(true);
-
-    // prepare the spec manager.
-    m_specs = SpecManager::makeSpecManager(vm, p, m_out);
   }  // initSatSolver
 
   /**
@@ -671,10 +665,10 @@ class ProjMCMethod : public MethodManager {
 
      @param[in] vm, the set of options.
    */
-  void run(po::variables_map &vm) {
+  T run() {
     T res = compute(m_out);
     printFinalStats(m_out);
-    std::cout << "s " << res << "\n";
+    return res;
   }  // run
 };
 }  // namespace d4

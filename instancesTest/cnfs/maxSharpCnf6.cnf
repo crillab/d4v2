@@ -1,0 +1,9 @@
+p cnf 10 1
+1 2 3 0
+c max 1 0
+c ind 2 3 0
+c p weight 2 0.15 0
+c p weight -2 0.85 0
+c p weight 3 2.6844999279345993e-08 0
+c p weight -3 0.85 0
+

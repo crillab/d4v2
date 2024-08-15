@@ -27,65 +27,58 @@ set(Boost_USE_STATIC_LIBS ON)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3rdParty/kahypar/)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3rdParty/bipe/)
 
-FIND_PACKAGE(Boost COMPONENTS program_options REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 
 if (NOT DEFINED BUILD_MODE)
    set(BUILD_MODE 1)
 endif()
 
+set(libList ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/bipe/build/libbipe.a  ${CMAKE_SOURCE_DIR}/3rdParty/bipe/3rdParty/glucose-3.0/core/libglucose.a ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_glucose.a)
+set(wnoOption -Wno-strict-aliasing -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses)
+
 # build.
 if(${BUILD_MODE} EQUAL 1)
-  # create an executable
-  add_executable(d4_debug ${SRCS} ${HEADERS})
-
-  # PROFILE
-  message("Debug mode activated")
-  set(CMAKE_CXX_COMPILER /usr/bin/g++-8 CACHE PATH "" FORCE)
-  
-  set(CMAKE_BUILD_TYPE Debug)
-  target_compile_options(d4_debug PUBLIC -std=c++17 -Wall -g -pg -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D DEBUG -DCMAKE_EXPORT_COMPILE_COMMANDS=1)
-  target_link_libraries (d4_debug -lz -g -pg -lgmpxx -lgmp -O3 ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_debug.a)
-
-  #target_compile_options(d4_debug PUBLIC -std=c++17 -Wall -g -O1 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D DEBUG -DCMAKE_EXPORT_COMPILE_COMMANDS=1)
-  #target_link_libraries (d4_debug -lz -g -lgmpxx -lgmp -O1 ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_debug.a)
-
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4_debug
-    DESTINATION bin
-    RENAME ${CMAKE_PROJECT_NAME}-d4_debug)
-elseif(${BUILD_MODE} EQUAL 2)
-  message("Static mode activated")
-
-  add_executable(d4_static ${SRCS} ${HEADERS})
-
-  target_compile_options(d4_static PUBLIC -std=c++17 -Wall -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D NDEBUG -static)
-  target_link_libraries (d4_static -lz -O3 -lgmpxx -lgmp ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a -D NDEBUG -static ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_static.a)
-  
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4_static
-    DESTINATION bin
-    RENAME ${CMAKE_PROJECT_NAME}-d4_static)
-elseif(${BUILD_MODE} EQUAL 3)
-  message("Library creation")
+  message("Library debug D4")  
   add_library(d4 ${SRCS} ${HEADERS})
 
-  target_compile_options(d4 PUBLIC -DNOMAIN -std=c++17 -Wall -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -D NDEBUG)
-  target_link_libraries (d4 -lz -O3 -lgmpxx -lgmp ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a -D NDEBUG ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_standard.a)
+  target_compile_options(d4 PUBLIC -DNOMAIN -std=c++20 -Wall -g -O2 ${wnoOption} -U NDEBUG)
+  target_link_libraries (d4 -lz -O2  -U NDEBUG -lgmpxx -lgmp ${libList})
   target_include_directories (d4 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
   install (TARGETS d4 DESTINATION lib)
-  install(FILES ${HEADER} DESTINATION include/${CMAKE_PROJECT_NAME})
+  install(FILES ${HEADER} DESTINATION include/${CMAKE_PROJECT_NAME}-debug)
+elseif(${BUILD_MODE} EQUAL 2)
+  message("Library static")  
+  add_library(d4 ${SRCS} ${HEADERS})
+
+  target_compile_options(d4 PUBLIC -DNOMAIN -std=c++20 -Wall -O3 ${wnoOption} -D NDEBUG -static)
+  target_link_libraries (d4 -lz -O3 -lgmpxx -lgmp ${libList} -static)
+  target_include_directories (d4 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+  install (TARGETS d4 DESTINATION lib)
+  install(FILES ${HEADER} DESTINATION include/${CMAKE_PROJECT_NAME}-static)
+elseif(${BUILD_MODE} EQUAL 3)
+  message("Library profil")  
+  add_library(d4 ${SRCS} ${HEADERS})
+
+  target_compile_options(d4 PUBLIC -DNOMAIN -std=c++20 -Wall -pg -O3 ${wnoOption} -D NDEBUG)
+  target_link_libraries (d4 -lz -O3 -pg -lgmpxx -lgmp ${libList})
+  target_include_directories (d4 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+  install (TARGETS d4 DESTINATION lib)
+  install(FILES ${HEADER} DESTINATION include/${CMAKE_PROJECT_NAME}-profil)
 else()  
-# create an executable
-add_executable(d4 ${SRCS} ${HEADERS})
+  message("Library standard")  
+  add_library(d4 ${SRCS} ${HEADERS})
 
-message("Classical mode activated")
-target_compile_options(d4 PUBLIC -std=c++17 -Wall -O3 -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses)
-target_link_libraries (d4 -lz -O3 -lgmpxx -lgmp ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_standard.a)
+  target_compile_options(d4 PUBLIC -DNOMAIN -std=c++20 -Wall -O3 ${wnoOption} -D NDEBUG)
+  target_link_libraries (d4 -lz -O3 -lgmpxx -lgmp ${libList})
+  target_include_directories (d4 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/d4
-  DESTINATION bin
-  RENAME ${CMAKE_PROJECT_NAME}-d4)
+  install (TARGETS d4 DESTINATION lib)
+  install(FILES ${HEADER} DESTINATION include/${CMAKE_PROJECT_NAME}-standard)
 endif()
 
 
@@ -98,15 +91,3 @@ foreach(file ${cmake_generated})
   endif()
 
 endforeach(file)
-
-
-
-#
-# Testing
-#
-
-# enable_testing()
-
-# include(cmake_includes/AddGoogleTest.cmake)
-# add_executable(HashString_test tests/HashString_test.cpp)
-# add_gtest(HashString_test)

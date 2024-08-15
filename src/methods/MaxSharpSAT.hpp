@@ -3,24 +3,24 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
 #include <bits/stdint-uintn.h>
 #include <sys/types.h>
 
-#include <boost/program_options.hpp>
 #include <cstddef>
 #include <cstdlib>
 #include <ctime>
@@ -36,10 +36,14 @@
 #include "src/caching/CacheManager.hpp"
 #include "src/caching/CachedBucket.hpp"
 #include "src/caching/TmpEntry.hpp"
-#include "src/heuristics/PartitioningHeuristic.hpp"
-#include "src/heuristics/PhaseHeuristic.hpp"
-#include "src/heuristics/ScoringMethod.hpp"
+#include "src/heuristics/partitioning/PartitioningHeuristic.hpp"
+#include "src/heuristics/phaseSelection/PhaseHeuristic.hpp"
+#include "src/heuristics/scoringVariable/ScoringMethod.hpp"
 #include "src/methods/nnf/Node.hpp"
+#include "src/options/branchingHeuristic/OptionBranchingHeuristic.hpp"
+#include "src/options/methods/OptionMaxSharpSatMethod.hpp"
+#include "src/options/solvers/OptionSolver.hpp"
+#include "src/options/specs/OptionSpecManager.hpp"
 #include "src/preprocs/PreprocManager.hpp"
 #include "src/problem/ProblemManager.hpp"
 #include "src/problem/ProblemTypes.hpp"
@@ -48,7 +52,7 @@
 #include "src/utils/MemoryStat.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
+
 template <class T>
 class Counter;
 
@@ -71,16 +75,18 @@ class MaxSharpSAT : public MethodManager {
   };
 
  private:
-  const unsigned NB_SEP = 131;
+  const unsigned NB_SEP = 170;
 
   bool optDomConst;
   bool optReversePolarity;
 
   unsigned m_nbCallCall;
   unsigned m_nbCallProj;
-  unsigned m_nbSplit;
+  unsigned m_nbSplitMax = 0;
+  unsigned m_nbSplitInd = 0;
   unsigned m_nbDecisionNode;
-  unsigned m_optCached;
+  unsigned m_optCachedMax;
+  unsigned m_optCachedInd;
   unsigned m_stampIdx;
 
   bool m_isUnderAnd = false;
@@ -103,8 +109,10 @@ class MaxSharpSAT : public MethodManager {
   ProblemManager *m_problem;
   WrapperSolver *m_solver;
   SpecManager *m_specs;
-  ScoringMethod *m_hVar;
-  PhaseHeuristic *m_hPhase;
+  ScoringMethod *m_hVarMax;
+  PhaseHeuristic *m_hPhaseMax;
+  ScoringMethod *m_hVarInd;
+  PhaseHeuristic *m_hPhaseInd;
 
   CacheManager<T> *m_cacheInd;
   CacheManager<MaxSharpSatResult> *m_cacheMax;
@@ -123,48 +131,47 @@ class MaxSharpSAT : public MethodManager {
 
  public:
   /**
-     Constructor.
-
-     @param[in] vm, the list of options.
+   * @brief Construct a new max#sat solver.
+   *
+   * @param options are the option.
+   * @param initProblem is the problem we deal with.
+   * @param out is the stream where are printed out the logs.
    */
-  MaxSharpSAT(po::variables_map &vm, std::string &meth, bool isFloat,
-              ProblemManager *initProblem, std::ostream &out,
-              LastBreathPreproc &lastBreath)
+  MaxSharpSAT(const OptionMaxSharpSatMethod &options,
+              ProblemManager *initProblem, std::ostream &out)
       : m_problem(initProblem), m_out(nullptr) {
     // init the output stream
     m_out.copyfmt(out);
     m_out.clear(out.rdstate());
     m_out.basic_ios<char>::rdbuf(out.rdbuf());
 
-    m_heuristicMax = vm["maxsharpsat-heuristic-phase"].as<std::string>();
-    m_out << "c [CONSTRUCTOR MAX#SAT] Heuristic on MAX variables: "
-          << m_heuristicMax << "\n";
-    m_heuristicMaxRdm = vm["maxsharpsat-heuristic-phase-random"].as<unsigned>();
-    m_out << "c [CONSTRUCTOR MAX#SAT] Use random on MAX variables: "
-          << m_heuristicMaxRdm << "\n";
-    m_threshold = vm["maxsharpsat-threshold"].as<double>();
-    m_out << "c [CONSTRUCTOR MAX#SAT] Threshold: " << m_threshold << "\n";
-    m_andDig = vm["maxsharpsat-option-and-dig"].as<bool>();
-    m_out << "c [CONSTRUCTOR MAX#SAT] Dig for a partial solution under an AND: "
-          << m_andDig << "\n";
+    m_heuristicMax = options.phaseHeuristicMax;
+    m_heuristicMaxRdm = options.randomPhaseHeuristicMax;
+    m_threshold = options.threshold;
+    m_andDig = options.digOnAnd;
+    m_greedyInitActivated = options.greedyInitActivated;
 
     // we create the SAT solver.
-    m_solver = WrapperSolver::makeWrapperSolver(vm, m_out);
+    m_solver = WrapperSolver::makeWrapperSolver(options.optionSolver, m_out);
     assert(m_solver);
-    m_panicMode = lastBreath.panic;
     m_solver->initSolver(*m_problem);
-    m_solver->setCountConflict(lastBreath.countConflict, 1,
-                               m_problem->getNbVar());
     m_solver->setNeedModel(true);
 
     // we initialize the object that will give info about the problem.
-    m_specs = SpecManager::makeSpecManager(vm, *m_problem, m_out);
+    m_specs = SpecManager::makeSpecManager(options.optionSpecManager,
+                                           *m_problem, m_out);
     assert(m_specs);
 
     // we initialize the object used to compute score and partition.
-    m_hVar = ScoringMethod::makeScoringMethod(vm, *m_specs, *m_solver, m_out);
-    m_hPhase =
-        PhaseHeuristic::makePhaseHeuristic(vm, *m_specs, *m_solver, m_out);
+    m_hVarMax = ScoringMethod::makeScoringMethod(
+        options.optionBranchingHeuristicMax, *m_specs, *m_solver, m_out);
+    m_hPhaseMax = PhaseHeuristic::makePhaseHeuristic(
+        options.optionBranchingHeuristicMax, *m_specs, *m_solver, m_out);
+
+    m_hVarInd = ScoringMethod::makeScoringMethod(
+        options.optionBranchingHeuristicInd, *m_specs, *m_solver, m_out);
+    m_hPhaseInd = PhaseHeuristic::makePhaseHeuristic(
+        options.optionBranchingHeuristicInd, *m_specs, *m_solver, m_out);
 
     // specify which variables are decisions, and which are not.
     m_redirectionPos.clear();
@@ -190,21 +197,18 @@ class MaxSharpSAT : public MethodManager {
     }
 
     // no partitioning heuristic for the moment.
-    assert(m_hVar && m_hPhase);
-    m_cacheInd = CacheManager<T>::makeCacheManager(vm, m_problem->getNbVar(),
-                                                   m_specs, m_out);
+    m_cacheInd = CacheManager<T>::makeCacheManager(
+        options.optionCacheManagerInd, m_problem->getNbVar(), m_specs, m_out);
     m_cacheMax = CacheManager<MaxSharpSatResult>::makeCacheManager(
-        vm, m_problem->getNbVar(), m_specs, m_out);
+        options.optionCacheManagerMax, m_problem->getNbVar(), m_specs, m_out);
 
     // init the clock time.
     initTimer();
 
-    m_greedyInitActivated = vm["maxsharpsat-option-greedy-init"].as<bool>();
-    m_out << "c [MAX#SAT] Greedy init activated: " << m_greedyInitActivated
-          << "\n";
-
-    m_optCached = vm["cache-activated"].as<bool>();
-    m_nbCallProj = m_nbDecisionNode = m_nbSplit = m_nbCallCall = 0;
+    m_optCachedMax = options.optionCacheManagerMax.isActivated;
+    m_optCachedInd = options.optionCacheManagerInd.isActivated;
+    m_nbCallProj = m_nbDecisionNode = m_nbSplitMax = m_nbSplitInd =
+        m_nbCallCall = 0;
 
     m_stampIdx = 0;
     m_stampVar.resize(m_specs->getNbVariable() + 1, 0);
@@ -228,8 +232,10 @@ class MaxSharpSAT : public MethodManager {
     delete m_problem;
     delete m_solver;
     delete m_specs;
-    delete m_hVar;
-    delete m_hPhase;
+    delete m_hVarMax;
+    delete m_hPhaseMax;
+    delete m_hVarInd;
+    delete m_hPhaseInd;
     delete m_cacheInd;
     delete m_cacheMax;
 
@@ -243,6 +249,11 @@ class MaxSharpSAT : public MethodManager {
    * @param solution is the maxsharp SAT solution we want to print.
    */
   void printSolution(MaxSharpSatResult &solution, char status) {
+    if (solution.count == T(0)) {
+      std::cout << "s UNSAT\n";
+      exit(0);
+    }
+
     assert(solution.valuation);
     assert(m_problem->getMaxVar().size() == m_sizeArray);
     std::cout << "v ";
@@ -266,10 +277,14 @@ class MaxSharpSAT : public MethodManager {
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbCallProj << std::fixed
         << std::setprecision(2) << "|" << std::setw(WIDTH_PRINT_COLUMN_MC)
         << getTimer() << "|" << std::setw(WIDTH_PRINT_COLUMN_MC)
+        << m_cacheMax->getNbPositiveHit() << "|"
+        << std::setw(WIDTH_PRINT_COLUMN_MC) << m_cacheMax->getNbNegativeHit()
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC)
         << m_cacheInd->getNbPositiveHit() << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << m_cacheInd->getNbNegativeHit()
-        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << m_cacheInd->usedMemory()
-        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbSplit << "|"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbSplitMax << "|"
+        << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbSplitInd << "|"
+        << std::setw(WIDTH_PRINT_COLUMN_MC) << m_cacheInd->usedMemory() << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << MemoryStat::memUsedPeak() << "|"
         << std::setw(WIDTH_PRINT_COLUMN_MC) << m_nbDecisionNode << "|"
         << std::scientific << std::setw(WIDTH_PRINT_COLUMN_MC)
@@ -298,10 +313,13 @@ class MaxSharpSAT : public MethodManager {
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#call(m)"
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#call(i)"
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "time"
-        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#posHit"
-        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#negHit"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#posHit(m)"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#negHit(m)"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#posHit(i)"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#negHit(i)"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#split(m)"
+        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#split(i)"
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "memory"
-        << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#split"
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "mem(MB)"
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "#dec. Node"
         << "|" << std::setw(WIDTH_PRINT_COLUMN_MC) << "max#count"
@@ -331,7 +349,8 @@ class MaxSharpSAT : public MethodManager {
         << "c \033[1m\033[31mStatistics \033[0m\n"
         << "c \033[33mCompilation Information\033[0m\n"
         << "c Number of recursive call: " << m_nbCallCall << "\n"
-        << "c Number of split formula: " << m_nbSplit << "\n"
+        << "c Number of split formula (max): " << m_nbSplitMax << "\n"
+        << "c Number of split formula (ind): " << m_nbSplitInd << "\n"
         << "c Number of decision: " << m_nbDecisionNode << "\n"
         << "c\n";
     m_cacheInd->printCacheInformation(out);
@@ -536,7 +555,7 @@ class MaxSharpSAT : public MethodManager {
     // consider each connected component.
     T mustMultiply = T(1);
     if (nbComponent) {
-      m_nbSplit += (nbComponent > 1) ? nbComponent : 0;
+      m_nbSplitMax += (nbComponent > 1) ? nbComponent : 0;
       for (int cp = 0; cp < nbComponent; cp++) {
         std::vector<Var> &connected = varConnected[cp];
         TmpEntry<MaxSharpSatResult> cb = m_cacheMax->searchInCache(connected);
@@ -601,7 +620,7 @@ class MaxSharpSAT : public MethodManager {
              m_problem->getWeightLit(Lit::makeLitFalse(v));
     if (m_scale.count > 0 && m_heuristicMax == "best")
       return m_scale.valuation[m_redirectionPos[v]];
-    return m_hPhase->selectPhase(v);
+    return m_hPhaseMax->selectPhase(v);
   }  // selectPhase
 
   /**
@@ -618,7 +637,7 @@ class MaxSharpSAT : public MethodManager {
 
     // search the next variable to branch on
     Var v =
-        m_hVar->selectVariable(connected, *m_specs, m_isMaxDecisionVariable);
+        m_hVarMax->selectVariable(connected, *m_specs, m_isMaxDecisionVariable);
 
     if (v == var_Undef) {
       std::vector<Lit> unitsLit;
@@ -696,7 +715,7 @@ class MaxSharpSAT : public MethodManager {
     // consider each connected component.
     T result = T(1);
     if (nbComponent) {
-      m_nbSplit += (nbComponent > 1) ? nbComponent : 0;
+      m_nbSplitInd += (nbComponent > 1) ? nbComponent : 0;
 
       for (int cp = 0; cp < nbComponent; cp++) {
         std::vector<Var> &connected = varConnected[cp];
@@ -714,6 +733,7 @@ class MaxSharpSAT : public MethodManager {
 
     m_specs->postUpdate(unitsLit);
     expelNoDecisionLit(unitsLit);
+
     return result;
   }  // countInd_
 
@@ -729,12 +749,14 @@ class MaxSharpSAT : public MethodManager {
     if (m_stopProcess) return T(0);
 
     // search the next variable to branch on
-    Var v = m_hVar->selectVariable(connected, *m_specs, m_isDecisionVariable);
+    Var v =
+        m_hVarInd->selectVariable(connected, *m_specs, m_isDecisionVariable);
 
     if (v == var_Undef) return T(1);
 
     // select a variable for decision.
-    Lit l = Lit::makeLit(v, m_hPhase->selectPhase(v));
+    Lit l = Lit::makeLit(v, m_hPhaseInd->selectPhase(v));
+    assert(m_problem->getWeightLit(l) && m_problem->getWeightLit(~l));
     m_nbDecisionNode++;
 
     // consider the two value for l
@@ -759,6 +781,7 @@ class MaxSharpSAT : public MethodManager {
     }
 
     b[1].d *= m_problem->computeWeightUnitFree<T>(b[1].unitLits, b[1].freeVars);
+
     return b[0].d + b[1].d;
   }  // computeDecisionNode
 
@@ -783,13 +806,16 @@ class MaxSharpSAT : public MethodManager {
     T multiply = T(1);
     result.valuation = getArray();
 
+    std::vector<Lit> unitsAssums;
     std::vector<Var> vars = setOfVar;
     unsigned cpt = 0, j = 0;
     for (unsigned i = 0; i < vars.size(); i++) {
       Var v = vars[i];
       if (m_isMaxDecisionVariable[v]) {
         Lit l = Lit::makeLit(v, m_solver->getModelVar(v) == l_False);
+
         m_solver->pushAssumption(l);
+        unitsAssums.push_back(l);
         multiply *= T(m_problem->getWeightLit(l));
         result.valuation[m_redirectionPos[l.var()]] = 1 - l.sign();
         cpt++;
@@ -802,12 +828,17 @@ class MaxSharpSAT : public MethodManager {
 
     std::vector<Lit> unitsLit;
     std::vector<Var> freeVariable;
+    m_specs->preUpdate(unitsAssums);
+
     result.count = countInd_(vars, unitsLit, freeVariable, out);
+
     if (!m_stopProcess)
       result.count =
           result.count * multiply *
           m_problem->computeWeightUnitFree<T>(unitsLit, freeVariable);
+
     m_solver->popAssumption(cpt);
+    m_specs->postUpdate(unitsAssums);
   }  // greedySearch
 
   /**
@@ -836,12 +867,31 @@ class MaxSharpSAT : public MethodManager {
       std::cout << "c Greedy search done: " << greedyResult.count << "\n";
     }
 
+    // add as  (negated) unit literal with a weight of 0.
+    unsigned nbZero = 0;
+    for (auto v : setOfVar) {
+      Lit l = Lit::makeLit(v, false);
+
+      if (m_problem->getWeightLit(l) == 0) {
+        nbZero++;
+        m_solver->pushAssumption(~l);
+      }
+      if (m_problem->getWeightLit(~l) == 0) {
+        nbZero++;
+        m_solver->pushAssumption(l);
+      }
+    }
+
+    std::cout << "c Number of zero weight literals: " << nbZero << "\n";
+
     DataBranch<T> b;
     searchMaxValuation(setOfVar, b.unitLits, b.freeVars, out, result);
     assert(result.valuation);
     if (!m_stopProcess)
       result.count *=
           m_problem->computeWeightUnitFree<T>(b.unitLits, b.freeVars);
+
+    if (nbZero) m_solver->popAssumption(nbZero);
   }  // compute
 
  public:
@@ -865,9 +915,8 @@ class MaxSharpSAT : public MethodManager {
    * variables where the variables not belonging to m_problem->getIndVar()
    * are existantially quantified.
    *
-   * @param[in] vm, the set of options.
    */
-  void run(po::variables_map &vm) {
+  void run() {
     std::vector<Var> setOfVar;
     for (int i = 1; i <= m_specs->getNbVariable(); i++) setOfVar.push_back(i);
 

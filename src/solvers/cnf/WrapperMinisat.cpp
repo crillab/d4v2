@@ -3,28 +3,31 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include "WrapperMinisat.hpp"
 
+#include <cassert>
 #include <iostream>
 #include <typeinfo>
 
 #include "minisat/Solver.hpp"
 #include "minisat/SolverTypes.hpp"
 #include "minisat/mtl/Vec.hpp"
-#include "src/problem/cnf/ProblemManagerCnf.hpp"
+#include "src/problem/CnfMatrix.hpp"
+#include "src/problem/ProblemManager.hpp"
 
 namespace d4 {
 using minisat::toInt;
@@ -37,11 +40,11 @@ using minisat::toInt;
  */
 void WrapperMinisat::initSolver(ProblemManager &p) {
   try {
-    ProblemManagerCnf &pcnf = dynamic_cast<ProblemManagerCnf &>(p);
+    CnfMatrix &pcnf = dynamic_cast<CnfMatrix &>(p);
 
     // say to the solver we have pcnf.getNbVar() variables.
-    while ((unsigned)s.nVars() <= pcnf.getNbVar()) s.newVar();
-    m_model.resize(pcnf.getNbVar() + 1, l_Undef);
+    while ((unsigned)s.nVars() <= p.getNbVar()) s.newVar();
+    m_model.resize(p.getNbVar() + 1, l_Undef);
 
     // load the clauses
     std::vector<std::vector<Lit>> &clauses = pcnf.getClauses();
@@ -51,8 +54,9 @@ void WrapperMinisat::initSolver(ProblemManager &p) {
       s.addClause(lits);
     }
   } catch (std::bad_cast &bc) {
-    std::cerr << "bad_cast caught: " << bc.what() << '\n';
-    std::cerr << "A CNF formula was expeted\n";
+    std::cerr << "c bad_cast caught: " << bc.what() << '\n';
+    std::cerr << "c A CNF formula was expeted\n";
+    assert(0);
   }
 
   m_activeModel = false;
@@ -137,6 +141,15 @@ double WrapperMinisat::getCountConflict(Var v) {
 }  // getCountConflict
 
 /**
+ * @brief decayCountConflict implementation.
+ *
+ */
+void WrapperMinisat::decayCountConflict() {
+  for (unsigned i = 0; i < s.scoreActivity.size(); i++)
+    s.scoreActivity[i] = s.scoreActivity[i] / 2;
+}  // decayCountConflict
+
+/**
  * @brief Set the count conflict in the solver.
  * @param[in] v is the variable we want to set the counter of  conflicts.
  * @param[in] count is the count we want to assign.
@@ -166,10 +179,11 @@ bool WrapperMinisat::getPolarity(Var v) {
    @param[in] l, the literal we want to branch on.
    @param[out] units, the unit literals
 
-   \return true if assign l and propagate does not give a conflict, false
-   otherwise.
+   \return true if assigning l and propagating it does not give a conflict,
+   false otherwise.
  */
 bool WrapperMinisat::decideAndComputeUnit(Lit l, std::vector<Lit> &units) {
+  if (!s.okay()) return false;
   minisat::Lit ml = minisat::mkLit(l.var(), l.sign());
   if (varIsAssigned(l.var())) {
     if (s.litAssigned(l.var()) != ml) return false;
@@ -363,4 +377,42 @@ void WrapperMinisat::popAssumption(unsigned count) {
 }  // popAssumption
 
 inline unsigned WrapperMinisat::getNbConflict() { return s.conflicts; }
+bool WrapperMinisat::isUnsat() { return !s.okay(); }
+
+/**
+ * @brief Compute the core.
+ *
+ */
+void WrapperMinisat::getCore() {
+  for (unsigned i = 0; i < s.conflict.size(); i++) {
+    minisat::Lit l = s.conflict[i];
+    std::cout << (minisat::sign(l) ? "-" : "") << minisat::var(l) << "("
+              << s.level(var(l)) << ") ";
+  }
+  std::cout << "  ---> " << s.decisionLevel() << "\n";
+}  // getCore
+
+/**
+ * @brief
+ *
+ * @param l
+ */
+void WrapperMinisat::getLastIUP(Lit dl) {
+  minisat::Lit ml = minisat::mkLit(dl.var(), dl.sign());
+  if (s.reason(minisat::var(ml)) == minisat::CRef_Undef) {
+    std::cout << "decision\n";
+    return;
+  }
+
+  minisat::vec<minisat::Lit> conf;
+  s.analyzeFinal(ml, conf);
+
+  for (unsigned i = 0; i < conf.size(); i++) {
+    minisat::Lit l = conf[i];
+    std::cout << (minisat::sign(l) ? "-" : "") << minisat::var(l) << "("
+              << s.level(var(l)) << ") ";
+  }
+  std::cout << "  ---> " << s.decisionLevel() << "\n";
+}  // getLastIUP
+
 }  // namespace d4

@@ -21,7 +21,7 @@ generateSatisfiableCNF()
         $CNF_GENERATOR | grep -v "c "> /tmp/test.cnf
 
     	nbVar=$(grep "p cnf " /tmp/test.cnf | cut -d ' ' -f3)
-    	if [ $nbVar -gt $1 ]; then continue; fi
+        if [ $nbVar -gt $1 ]; then continue; fi
         $SOLVER /tmp/test.cnf > /dev/null
         ret=$?
     done
@@ -96,10 +96,8 @@ debugRoutine(){
     do
         printf "number of instances tested %d\r" "$cpt"
 
-        # echo "$1"
-
-	    nameFileCNF=$(generateSatisfiableCNF $2)
-	    # grep "p cnf" $nameFileCNF
+	    nameFileCNF=$(generateSatisfiableCNF 200)
+        # grep "p cnf" $nameFileCNF
         timeout 3 $1 $nameFileCNF # > /dev/null 2>/dev/null
 
         code=$?

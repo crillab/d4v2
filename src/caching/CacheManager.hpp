@@ -3,36 +3,35 @@
  * Copyright (C) 2020  Univ. Artois & CNRS
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
 
-#include <boost/program_options.hpp>
 #include <functional>
 #include <vector>
 
-#include "BucketManager.hpp"
-#include "CacheCleaningManager.hpp"
 #include "CacheList.hpp"
 #include "CacheNoCollision.hpp"
 #include "CachedBucket.hpp"
 #include "TmpEntry.hpp"
+#include "bucket/BucketManager.hpp"
 #include "src/exceptions/FactoryException.hpp"
 #include "src/hashing/HashString.hpp"
+#include "src/options/cache/OptionCacheManager.hpp"
 #include "src/specs/SpecManager.hpp"
 
 namespace d4 {
-namespace po = boost::program_options;
 
 template <class T>
 class CacheCleaningManager;
@@ -70,13 +69,13 @@ class CacheManager {
   /**
    * @brief Construct a new Cache Manager object
    *
-   * @param vm is a map to get the option.
+   * @param options gives the selected options.
    * @param nbVar is the number of variables.
    * @param specs is a structure to get data about the formula.
    * @param out is the stream where are printed out the logs.
    */
-  CacheManager(po::variables_map &vm, unsigned nbVar, SpecManager *specs,
-               std::ostream &out)
+  CacheManager(const OptionCacheManager &options, unsigned nbVar,
+               SpecManager *specs, std::ostream &out)
       : m_out(nullptr) {
     m_out.copyfmt(out);
     m_out.clear(out.rdstate());
@@ -86,10 +85,11 @@ class CacheManager {
     verb = m_nbRemoveEntry = sumAffectedHitCache = 0;
     m_limitVarCached = (nbVar < MAX_NBVAR_CACHED) ? nbVar : MAX_NBVAR_CACHED;
 
-    m_cacheCleaningManager =
-        CacheCleaningManager<T>::makeCacheCleaningManager(vm, this, nbVar, out);
-    m_bucketManager =
-        BucketManager<T>::makeBucketManager(vm, this, *specs, out);
+    m_cacheCleaningManager = CacheCleaningManager<T>::makeCacheCleaningManager(
+        options.optionCacheCleaningManager, this, nbVar, out);
+
+    m_bucketManager = BucketManager<T>::makeBucketManager(
+        options.optionBucketManager, this, *specs, out);
   }  // constructor
 
   /**
@@ -103,24 +103,21 @@ class CacheManager {
   /**
    * @brief Factory.
    *
-   * @param vm are the options.
+   * @param options are the options.
    * @param nbVar is the number of variables.
    * @param specs gives the information about the input formula.
    * @param out is the stream where are printed out the logs.
    * @return CacheManager<T>*
    */
-  static CacheManager<T> *makeCacheManager(po::variables_map &vm,
+  static CacheManager<T> *makeCacheManager(const OptionCacheManager &options,
                                            unsigned nbVar, SpecManager *specs,
                                            std::ostream &out) {
-    std::string method = vm["cache-method"].as<std::string>();
-    out << "c [CACHE] Cache method used: " << method << "\n";
+    if (options.cachingMethod == CACHE_NO_COL)
+      return new CacheNoCollision<T>(options, nbVar, specs, out);
+    if (options.cachingMethod == CACHE_LIST)
+      return new CacheList<T>(options, nbVar, specs, out);
 
-    if (method == "no-collision")
-      return new CacheNoCollision<T>(vm, nbVar, specs, out);
-    if (method == "list") return new CacheList<T>(vm, nbVar, specs, out);
-
-    throw(
-        FactoryException("Cannot create a ProblemManager", __FILE__, __LINE__));
+    throw(FactoryException("Cannot create a CacheManager", __FILE__, __LINE__));
   }  // makeCacheManager
 
   virtual void pushInHashTable(CachedBucket<T> &cb, unsigned int hashValue,
@@ -142,7 +139,9 @@ class CacheManager {
   }
 
   inline unsigned getLimitVarCached() { return m_limitVarCached; }
-  inline void setLimitVarCache(unsigned val) { m_limitVarCached = val; }
+  inline void setLimitVarCache(unsigned val) {
+    m_limitVarCached = (val <= m_nbInitVar) ? val : m_nbInitVar;
+  }
   inline bool isActivated(unsigned nbVar) { return nbVar <= m_limitVarCached; }
   inline unsigned long int nbCreationBucket() { return m_nbCreationBucket; }
   inline unsigned long int sumDataSize() { return m_sumDataSize; }

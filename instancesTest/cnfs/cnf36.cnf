@@ -1,0 +1,17 @@
+c 2022-11-30 13:47:57 by qbfdd.py,v 1.2.2
+c qbfdd.py /tmp/test.cnf /home/lagniez/Works/Softs/d4/build/d4_debug -m erosion -i -m ddmin -g b -qS
+c 
+c mode: ddmin
+c rounds: 2
+c test runs: 384
+c time elapsed: 20.36s
+c total: clauses  : -10 (66.67%)
+c        variables: -0 (0.00%)
+c        literals : -59 (69.41%)
+c 
+p cnf 32 5
+-3 -4 8 -9 11 0
+1 -2 -3 9 -11 0
+-1 2 3 -4 5 -11 0
+-1 2 3 4 -6 0
+-1 -2 3 6 -7 0
