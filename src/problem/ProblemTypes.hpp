@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
+#include <cstdint>
 
 namespace d4 {
 
