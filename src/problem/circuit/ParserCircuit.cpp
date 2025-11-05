@@ -191,6 +191,37 @@ inline void process_weight_comment(std::string &line, std::string &nextWord,
 }
 
 /**
+ * @brief Auxiliary method to process projected vars.
+ * This expects a line of the form `P v1 v2 v3 ... vn`.
+ *
+ * @param line The line to process.
+ * @param nextWord A string to store the next word in.
+ * @param projected_vars The output vector containing projected vars.
+ * @param litname_map A map from varname to the assigned literal.
+ */
+inline void process_projected_vars(std::string &line, std::string &nextWord,
+                                    std::vector<Var> &projected_vars,
+                                    LitNameMap &litname_map) {
+  // expected line format: P v1 v2 v3 ... vn
+  assert(line[0] == 'P');
+  std::stringstream linestream(line);
+  linestream >> nextWord; 
+
+  while (linestream >> nextWord) {
+    // Intentionally skip the sign for projected vars
+    bool sign = nextWord[0] == '-';
+    if (sign) {
+      nextWord = nextWord.substr(1, std::string::npos);
+    }
+
+    Lit lit = litname_map.get_lit(nextWord);
+    projected_vars.push_back(lit.var());
+  }
+  assert(projected_vars.size() >= 1);
+  std::sort(projected_vars.begin(), projected_vars.end());
+}
+
+/**
  * @brief Parse the BC-S1.2 format in order to extract the formula
  * and literal weights.
  *
@@ -203,6 +234,7 @@ inline void process_weight_comment(std::string &line, std::string &nextWord,
  * statement	->	G var := FlatFormula\n |
  *                  I var\n |
  *                  T literal\n |
+ *                  P LiteralList\n
  * LiteralList	->	literal | literal LiteralList
  * FlatFormula	->	A LiteralList |
  *                   O LiteralList
@@ -248,7 +280,11 @@ int ParserCircuit::parse_circuit_main(std::ifstream &in,
       if (line.starts_with("c w ")) {
         process_weight_comment(line, nextWord, litname_map, weightLit);
       }
-      // TODO: anything else? projected vars?
+    } else if (line[0] == 'P') {
+      process_projected_vars(line, nextWord,
+        problemManager->getSelectedVar(),
+        litname_map);
+      // TODO: anything else? 
     } else {
       std::cerr << "ERROR parsing line " << lineNb
                 << ". Unknown start character.\n",
