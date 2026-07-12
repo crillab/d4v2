@@ -19,7 +19,7 @@
 
 #include "WrapperGlucose.hpp"
 
-#include <bits/stdint-uintn.h>
+#include <cstdint>
 
 #include <iostream>
 #include <typeinfo>

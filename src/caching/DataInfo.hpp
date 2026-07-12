@@ -17,7 +17,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 #pragma once
-#include <bits/stdint-uintn.h>
+#include <cstdint>
 #include <math.h>
 #include <stdio.h>
 

@@ -18,7 +18,7 @@
  */
 #pragma once
 
-#include <bits/stdint-uintn.h>
+#include <cstdint>
 #include <sys/types.h>
 
 #include <algorithm>

@@ -1,96 +1,165 @@
-# D4 Project
+# D4 (d4v2) — macOS / Homebrew-GCC fork
 
-D4 is a library designed to compute model counts of logical formulas. It currently supports CNF and circuit-based formats, and can be integrated into custom applications for advanced reasoning and model enumeration tasks.
+This is a fork of [crillab/d4v2](https://github.com/crillab/d4v2), the D4 model
+counter / knowledge compiler library, **modified to compile and run natively on
+macOS (Apple Silicon, arm64) using the Homebrew GNU toolchain (`g++-16`/`gcc-16`)
+instead of Apple clang.** The upstream build assumes a Linux/GNU environment; this
+fork makes the build scripts, CMake files, and a few non-portable sources work on
+macOS, and adds a helper script to fetch the two dependencies that cannot be
+checked in.
 
-This README provides an overview of how to use the D4 library, the supported input formats, and example usage.
+Everything in the original library is unchanged in behavior — this is purely a
+portability fork. Unweighted model counts were cross-checked against an
+independent counter (ADDMC) and agree exactly, and the PaToH-based
+tree-decomposition branching heuristic (the reason D4 is state of the art) is
+fully active in the macOS build.
 
 ---
 
-## Supported Methods
+## What changed in this fork
 
-D4 supports various methods to analyze and count models of logical formulas. More detailed documentation on the methods used internally (e.g., decision diagrams, SAT solvers, etc.) will be added soon.
+**Build system (use Homebrew GCC, not clang):**
+- `build.sh`, `3rdParty/bipe/build.sh`, `3rdParty/flowCutter/Makefile`,
+  `3rdParty/glucose-3.0/mtl/template.mk`, and `demo/counter/Makefile` now use
+  `g++-16`/`gcc-16`.
+- The CMake builds use the **Unix Makefiles** generator + `make` instead of
+  **Ninja** (Ninja is no longer required).
+- `cmake_minimum_required(VERSION 3.1)` → `3.5` in both `CMakeLists.txt`
+  (CMake ≥ 4 removed compatibility with `< 3.5`).
+- The stale, unused `kahypar` entry was removed from the main link list (no
+  source references it and no `libkahypar.a` is shipped).
+- The final "merge all static libs into one" step used GNU `ar`'s thin-archive
+  (`T`) and MRI-script (`-M`) modes, which macOS `ar` lacks; it now uses macOS
+  `libtool -static -o`. (in `build.sh` and `3rdParty/bipe/build.sh`)
+- `CMakeLists.txt` adds `/opt/homebrew/{include,lib}` (g++ does not search the
+  Homebrew prefix by default) for the header-only Boost and for gmp.
+
+**Source portability (macOS / libc++ headers):**
+- `3rdParty/glucose-3.0/utils/System.cc` and
+  `3rdParty/bipe/3rdParty/glucose-3.0/utils/System.cc`: the `__APPLE__` branch
+  referenced a non-existent namespace and omitted `memUsedPeak()`; fixed to the
+  correct namespace and the missing definition added.
+- Nine `src/**` files `#include`d Linux glibc-internal headers
+  (`<bits/stdint-uintn.h>`, `<bits/types/clock_t.h>`) that don't exist on macOS;
+  replaced with the portable `<cstdint>` / `<ctime>`.
+
+**Tooling added:**
+- `setup-macos-deps.sh` — downloads/builds the two non-bundled dependencies
+  (see below).
 
 ---
 
-## How to Use
+## Building on macOS (Apple Silicon)
 
-D4 is implemented as a library and should be linked into a separate executable for use. A demo executable is provided to demonstrate basic functionality.
-
-To run a simple counter example on a CNF file:
+### 1. Prerequisites (Homebrew)
 
 ```bash
-cd demo/counter
-./build.sh
+brew install gcc gmp boost cmake
+```
+
+This installs `g++-16`/`gcc-16` (adjust the version in `setup-macos-deps.sh` and
+the build files if Homebrew gives you a different major version), the GMP and
+Boost headers, and CMake.
+
+### 2. Fetch the non-bundled dependencies
+
+```bash
+./setup-macos-deps.sh
+```
+
+### 3. Build the library and the demo counter
+
+```bash
+./build.sh                       # builds 3rd-party libs + libd4.a
+(cd demo/counter && make c -j)   # builds the demo executable
+```
+
+### 4. Test
+
+```bash
+./demo/counter/build/counter -i instancesTest/cnfs/cnf5.cnf
+# ... s 7106560
+```
+
+---
+
+## Dependencies that are NOT bundled (and why)
+
+`setup-macos-deps.sh` obtains both automatically.
+
+### PaToH (required)
+
+D4's branching heuristic uses the **PaToH** hypergraph partitioner. PaToH is
+closed-source and its license forbids redistribution, so **no `libpatoh.a` is
+checked in** (upstream ships only the standalone `patoh` executable). Georgia
+Tech publishes native macOS builds, including **arm64**:
+
+- <https://faculty.cc.gatech.edu/~umit/software.html> → `patoh-Darwin-arm64.tar.gz`
+
+The script downloads the archive for your architecture and installs
+`libpatoh.a` + `patoh.h` into `3rdParty/patoh/`. (To do it by hand: download the
+tarball, then copy its `libpatoh.a` and `patoh.h` into `3rdParty/patoh/`.)
+
+### boost::program_options (required by the demo only)
+
+The D4 *library* uses only header-only Boost (`boost::multiprecision` over GMP),
+so it builds against the Homebrew Boost headers directly. The demo `counter`'s
+command-line parser, however, links the compiled **`boost::program_options`** —
+and Homebrew's `libboost_program_options.a` is built with Apple **clang/libc++**,
+which is **ABI-incompatible** with a **g++/libstdc++** build (you'd get undefined
+`std::__cxx11::...` symbols at link time).
+
+The script therefore downloads the `program_options` sources matching your
+installed Boost version and compiles them with the same `g++` into
+`3rdParty/boost_po/libboost_program_options.a`. (`3rdParty/boost_po/` is
+git-ignored — it is regenerated by the script.)
+
+---
+
+## Library usage
+
+D4 is a library; link `build/libd4.a` into your own executable. The bundled demo
+under `demo/counter` shows the basic counting workflow.
+
+### Input formats
+
+**DIMACS CNF** (standard):
+
+```bash
 ./build/counter -i ../../instancesTest/cnfs/cnf5.cnf
 ```
 
-To count models of a circuit-based input, see the example under the `circuit` section below.
+**Circuit format (BC-S1.2)** — logic gates instead of clauses:
 
----
-
-## Input Formats
-
-### 1. Circuit Format
-
-D4 supports a custom circuit format (BC-S1.2), where formulas are defined in terms of logic gates and evaluation constraints. This format allows complex Boolean functions to be represented more directly than CNF.
-
-#### Format Description
-
-A BC-S1.2 file consists of:
-
-* **Comments**: Prefixed with `c`
-* **Weight Information** (optional): `c w <literal> <weight>`
-* **Input Variables**: `I <var>`
-* **Gate Definitions**: `G <var> := <formula>`
-* **Target Literals**: `T <literal>`
-
-#### Formula Syntax
-
-A gate's formula can be one of:
-
-* `A <lit1> <lit2> ...` – AND
-* `O <lit1> <lit2> ...` – OR
-* `I <lit>` – Identity (can also represent negation using `-<lit>`)
-
-> A literal is either a variable or its negation (e.g., `x`, `-x`).
-
-#### Example 1: Single Negative Literal
-
-```plaintext
-c BC-S1.2
-I x
-T -x
 ```
-
-#### Example 2: Complex Formula `(a & b) | -(-c & b)`
-
-```plaintext
 c BC-S1.2
 I a
 I b
 I c
-G g1 := A a b
+G g1 := A a b          # AND
 G g2 := A -c b
-G g3 := O g1 -g2
-T g3
+G g3 := O g1 -g2       # OR
+T g3                   # target literal
 ```
-
-#### Run Example
-
-To run the model counter on a circuit:
 
 ```bash
 ./build/counter -i ../../instancesTest/circuits/circ1.bc --input-type circuit
 ```
 
+A gate's formula is one of `A <lits...>` (AND), `O <lits...>` (OR), or
+`I <lit>` (identity / negation). A literal is a variable or its negation
+(`x`, `-x`). Optional weights: `c w <literal> <weight>`.
+
+See `./demo/counter/build/counter --help` for the full option set (preprocessing,
+branching/scoring heuristics, tree-decomposition options, float precision, etc.).
+
 ---
 
-### 2. CNF Format
+## Upstream / credits
 
-D4 also supports the standard **DIMACS CNF** format. This is widely used in SAT solving and describes Boolean formulas as a conjunction of clauses, each a disjunction of literals.
-
-To run a model counter on a CNF file:
-
-```bash
-./build/counter -i ../../instancesTest/cnfs/cnf5.cnf
-```
+- Upstream: **[crillab/d4v2](https://github.com/crillab/d4v2)** (Univ. Artois &
+  CNRS) — see that repository and the D4 papers for the algorithms.
+- PaToH: Ümit V. Çatalyürek & Cevdet Aykanat.
+- This fork only adds macOS/Homebrew-GCC build support; all credit for D4 itself
+  goes to its authors. Distributed under the same license as upstream
+  (see `LICENSE`).

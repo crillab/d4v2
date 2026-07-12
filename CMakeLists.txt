@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # set the project name and version
 project(D4 VERSION 0.1)
@@ -31,11 +31,24 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3rdParty/flowCutter/)
 
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 
+if(APPLE)
+  # Homebrew (Apple Silicon) prefix for gmp / boost headers and libs -- g++ does
+  # not search /opt/homebrew by default.
+  INCLUDE_DIRECTORIES(/opt/homebrew/include)
+  LINK_DIRECTORIES(/opt/homebrew/lib)
+endif()
+
 if (NOT DEFINED BUILD_MODE)
    set(BUILD_MODE 1)
 endif()
 
-set(libList ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/flowCutter/libflowCutter.a ${CMAKE_SOURCE_DIR}/3rdParty/bipe/build/libbipe.a  ${CMAKE_SOURCE_DIR}/3rdParty/bipe/3rdParty/glucose-3.0/core/libglucose.a ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_glucose.a)
+if(APPLE)
+  # On macOS the partitioner is PaToH only; kahypar is referenced by no source and
+  # the repo ships no libkahypar.a, so it is omitted here (it was the first entry).
+  set(libList ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/flowCutter/libflowCutter.a ${CMAKE_SOURCE_DIR}/3rdParty/bipe/build/libbipe.a  ${CMAKE_SOURCE_DIR}/3rdParty/bipe/3rdParty/glucose-3.0/core/libglucose.a ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_glucose.a)
+else()
+  set(libList ${CMAKE_SOURCE_DIR}/3rdParty/kahypar/build/lib/libkahypar.a ${Boost_LIBRARIES} ${CMAKE_SOURCE_DIR}/3rdParty/flowCutter/libflowCutter.a ${CMAKE_SOURCE_DIR}/3rdParty/bipe/build/libbipe.a  ${CMAKE_SOURCE_DIR}/3rdParty/bipe/3rdParty/glucose-3.0/core/libglucose.a ${CMAKE_SOURCE_DIR}/3rdParty/patoh/libpatoh.a ${CMAKE_SOURCE_DIR}/3rdParty/glucose-3.0/core/lib_glucose.a)
+endif()
 set(wnoOption -Wno-strict-aliasing -Wno-class-memaccess -Wno-format -Wno-misleading-indentation -Wno-literal-suffix -Wno-sign-compare -Wno-parentheses -Wno-restrict)
 
 # build.
